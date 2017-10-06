@@ -1,0 +1,9 @@
+
+&locnorm_namelist
+   afile1='fort.11'   ! input file.
+   afile2='fort.11f'       ! output locally normalized file.
+   icopy=1    ! 0 for don't copy the header, 1 for copy the header.
+   igrid=0   !  0 is for the input wavelengths and 1 is for interpolating the flux to my standard grid.
+   imode=-4                ! Default:  don't change.
+   x_relative=.15d0        ! Default:  don't change.
+/
