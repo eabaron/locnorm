@@ -1,0 +1,3935 @@
+#
+# Time-stamp: <26/01/2006 12:33 baron>
+#
+.SUFFIXES: .f90 .f .c .cc .o 
+
+
+######################################################
+# common (trivial) flags
+######################################################
+
+CFLAGS=-DSUN -O -DO_LARGEFILE=0
+AR=ar
+RANLIB=ranlib
+S3R2T=S3R2T
+
+######################################################
+# IBM RS/6000, xlf90 7.1.0.2 on AIX 4.3
+######################################################
+
+#AIX-PWR3 #
+#AIX-PWR3 # remove -lmass if you do not have the mass library
+#AIX-PWR3 # performance will be reduced by 50%. Get the lib from
+#AIX-PWR3 # IBM's WWW site. It is worth it!
+#AIX-PWR3 #
+#AIX-PWR3 LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas -lC -bmaxdata:0x20000000 
+#AIX-PWR3 LFLAGS2= 
+#AIX-PWR3 # flag for architecture:
+#AIX-PWR3 ARCH=aix
+#AIX-PWR3 
+#AIX-PWR3 # code conversion call:
+#AIX-PWR3 #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR3 #for a uniform calling statement we use a dummy script
+#AIX-PWR3 CONVERT=2aix.pl $<
+#AIX-PWR3 
+#AIX-PWR3 #
+#AIX-PWR3 # Flags for optimization:
+#AIX-PWR3 #
+#AIX-PWR3 FFLAGS= -O3 -qarch=pwr3 -qfloat=fltint:rsqrt -qextchk \
+#AIX-PWR3  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR3  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr3 \
+#AIX-PWR3  -qfixed -q32 -qspill=32648
+#AIX-PWR3 # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3 DFLAGS= -c -qextchk -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR3 -qfixed -qsave -qarch=pwr3 -qtune=pwr3 -q32 -qnohot -qstrict
+#AIX-PWR3 #
+#AIX-PWR3 # Flags for debugging::
+#AIX-PWR3 #
+#AIX-PWR3 #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX-PWR3 #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3 #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32
+#AIX-PWR3 #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3 #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32 -qhot 
+#AIX-PWR3 
+#AIX-PWR3 CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q32
+#AIX-PWR3 BENCHFLAGS= -qipa=inline=noauto $(FFLAGS)
+#AIX-PWR3 
+#AIX-PWR3 FLAGS2=-bloadmap:$*.ld
+#AIX-PWR3 
+#AIX-PWR3 F77=xlf90
+#AIX-PWR3 F90=xlf90
+#AIX-PWR3 LD=xlC -lxlf -lxlf90 -lxlopt
+#AIX-PWR3 #
+#AIX-PWR3 # Flags for QD package:
+#AIX-PWR3 #
+#AIX-PWR3 CC_OPTS=-DHAS_FMA
+#AIX-PWR3 C_QD_OPTS=-q32 -qarch=pwr3 -qtune=pwr3 -qstrict -O3 -qipa
+#AIX-PWR3 CC=xlC
+#AIX-PWR3 CC_FLAGS=
+#AIX-PWR3 AR=ar
+#AIX-PWR3 AR_FLAGS=-crv
+#AIX-PWR3 #
+#AIX-PWR3 # Flags for SuperLU package:
+#AIX-PWR3 #
+#AIX-PWR3 ARCH_SLU=ar
+#AIX-PWR3 ARCHFLAGS_SLU=-crv
+#AIX-PWR3 CC_SLU=xlc
+#AIX-PWR3 CFLAGS_SLU= -O $(C_QD_OPTS)
+#AIX-PWR3 FORTRAN=$(F90)
+#AIX-PWR3 LOADER=$(LD)
+#AIX-PWR3 LOADOPTS=
+#AIX-PWR3 CDEFS=-DNoChange
+
+
+######################################################
+# IBM RS/6000, xlf90 6.1 on AIX 4.3, SMP
+######################################################
+
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP # remove -lmass if you do not have the mass library
+#AIX-PWR3-SMP # performance will be reduced by 50%. Get the lib from
+#AIX-PWR3-SMP # IBM's WWW site. It is worth it!
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas -bmaxdata:0x20000000
+#AIX-PWR3-SMP LFLAGS2= 
+#AIX-PWR3-SMP # flag for architecture:
+#AIX-PWR3-SMP ARCH=aix
+#AIX-PWR3-SMP 
+#AIX-PWR3-SMP # code conversion call:
+#AIX-PWR3-SMP #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR3-SMP #for a uniform calling statement we use a dummy script
+#AIX-PWR3-SMP CONVERT=2aix.pl $<
+#AIX-PWR3-SMP 
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP # Flags for optimization:
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP FFLAGS= -O3 -qarch=pwr3 -qfloat=fltint:rsqrt -qnoextchk \
+#AIX-PWR3-SMP  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR3-SMP  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr3 \
+#AIX-PWR3-SMP  -qfixed -q32 -qspill=32648 -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-SMP DFLAGS= -c -qnoextchk -qspill=32648 \
+#AIX-PWR3-SMP -qfixed -qsave -qarch=pwr3 -qtune=pwr3 -q32 -qhot -qstrict \
+#AIX-PWR3-SMP -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP # Flags for debugging::
+#AIX-PWR3-SMP #
+#AIX-PWR3-SMP #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX-PWR3-SMP #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32
+#AIX-PWR3-SMP #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32 -qhot 
+#AIX-PWR3-SMP 
+#AIX-PWR3-SMP CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q32
+#AIX-PWR3-SMP BENCHFLAGS= -qipa=inline=noauto $(FFLAGS)
+#AIX-PWR3-SMP 
+#AIX-PWR3-SMP FLAGS2=-bloadmap:$*.ld
+#AIX-PWR3-SMP 
+#AIX-PWR3-SMP F77=xlf90_r
+#AIX-PWR3-SMP F90=xlf90_r
+#AIX-PWR3-SMP LD=xlf90_r
+
+
+
+######################################################
+# IBM RS/6000, xlf90 6.1 on AIX 4.3 using MPI
+######################################################
+
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI # remove -lmass if you do not have the mass library
+#AIX-PWR3-MPI # performance will be reduced by 50%. Get the lib from
+#AIX-PWR3-MPI # IBM's WWW site. It is worth it!
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI LFLAGS= -lC -bloadmap:map.ld -lmass -lessl -lblas -bmaxdata:0x20000000
+#AIX-PWR3-MPI LFLAGS2= 
+#AIX-PWR3-MPI # flag for architecture:
+#AIX-PWR3-MPI ARCH=aix-mpi
+#AIX-PWR3-MPI 
+#AIX-PWR3-MPI # code conversion call:
+#AIX-PWR3-MPI #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR3-MPI #for a uniform calling statement we use a dummy script
+#AIX-PWR3-MPI CONVERT=2aix-mpi.pl $<
+#AIX-PWR3-MPI 
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI # Flags for optimization:
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI FFLAGS= -O3 -qarch=pwr3 -qfloat=fltint:rsqrt \
+#AIX-PWR3-MPI  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR3-MPI  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr3 \
+#AIX-PWR3-MPI  -qfixed -q32 -qspill=32648 -qhalt=S
+#AIX-PWR3-MPI # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-MPI DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR3-MPI -qfixed -qsave -qarch=pwr3 -qtune=pwr3 -q32 -qnohot -qstrict -qhalt=S
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI # Flags for debugging::
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX-PWR3-MPI #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32
+#AIX-PWR3-MPI #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32 -qhot 
+#AIX-PWR3-MPI 
+#AIX-PWR3-MPI CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q32
+#AIX-PWR3-MPI 
+#AIX-PWR3-MPI FLAGS2=-bloadmap:$*.ld
+#AIX-PWR3-MPI 
+#AIX-PWR3-MPI F77=mpxlf90 
+#AIX-PWR3-MPI F90=mpxlf90 
+#AIX-PWR3-MPI LD=xlC \
+#AIX-PWR3-MPI    -L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/us -lmpi -lvtd -lxlf90 -lxlopt -lxlf -lxlomp_ser -lm -lc \
+#AIX-PWR3-MPI    -qxlf90=noautodealloc:nosignedzero -binitfini:poe_remote_main
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI # Flags for QD package:
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI CC_OPTS=-DHAS_FMA
+#AIX-PWR3-MPI C_QD_OPTS=-q32 -qarch=pwr3 -qtune=pwr3 -qstrict -O3
+#AIX-PWR3-MPI CC=xlC -q32
+#AIX-PWR3-MPI CC_FLAGS=-q32 -qarch=pwr3 -qtune=pwr3 -qstrict -O3
+#AIX-PWR3-MPI AR=ar
+#AIX-PWR3-MPI AR_FLAGS=-crv
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI # Flags for SuperLU package:
+#AIX-PWR3-MPI #
+#AIX-PWR3-MPI ARCH_SLU=ar
+#AIX-PWR3-MPI ARCHFLAGS_SLU=-crv
+#AIX-PWR3-MPI CC_SLU=xlc
+#AIX-PWR3-MPI CFLAGS_SLU= -O $(C_QD_OPTS)
+#AIX-PWR3-MPI FORTRAN=$(F90)
+#AIX-PWR3-MPI LOADER=$(LD)
+#AIX-PWR3-MPI LOADOPTS=
+#AIX-PWR3-MPI CDEFS=-DNoChange
+
+
+######################################################
+# IBM RS/6000, xlf90 6.1 on AIX 4.3 using MPI+SMP
+######################################################
+
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP # remove -lmass if you do not have the mass library
+#AIX-PWR3-MPI-SMP # performance will be reduced by 50%. Get the lib from
+#AIX-PWR3-MPI-SMP # IBM's WWW site. It is worth it!
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas -bmaxdata:0x20000000
+#AIX-PWR3-MPI-SMP LFLAGS2= 
+#AIX-PWR3-MPI-SMP # flag for architecture:
+#AIX-PWR3-MPI-SMP ARCH=aix-mpi
+#AIX-PWR3-MPI-SMP 
+#AIX-PWR3-MPI-SMP # code conversion call:
+#AIX-PWR3-MPI-SMP #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR3-MPI-SMP #for a uniform calling statement we use a dummy script
+#AIX-PWR3-MPI-SMP CONVERT=2aix-mpi.pl $<
+#AIX-PWR3-MPI-SMP 
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP # Flags for optimization:
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP FFLAGS= -O3 -qarch=pwr3 -qfloat=fltint:rsqrt \
+#AIX-PWR3-MPI-SMP  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR3-MPI-SMP  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr3 \
+#AIX-PWR3-MPI-SMP  -qfixed -q32 -qspill=32648 -qhalt=S -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-MPI-SMP DFLAGS= -c -qspill=32648 \
+#AIX-PWR3-MPI-SMP -qfixed -qsave -qarch=pwr3 -qtune=pwr3 -q32 -qhot -qstrict -qhalt=S \
+#AIX-PWR3-MPI-SMP -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP # Flags for debugging::
+#AIX-PWR3-MPI-SMP #
+#AIX-PWR3-MPI-SMP #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX-PWR3-MPI-SMP #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-MPI-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32
+#AIX-PWR3-MPI-SMP #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-MPI-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q32 -qhot 
+#AIX-PWR3-MPI-SMP 
+#AIX-PWR3-MPI-SMP CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q32
+#AIX-PWR3-MPI-SMP 
+#AIX-PWR3-MPI-SMP FLAGS2=-bloadmap:$*.ld
+#AIX-PWR3-MPI-SMP 
+#AIX-PWR3-MPI-SMP F77=mpxlf90_r -qnoipa
+#AIX-PWR3-MPI-SMP F90=mpxlf90_r -qnoipa
+#AIX-PWR3-MPI-SMP LD=mpxlf90_r -qnoipa
+
+######################################################
+# IBM RS/6000, mpxlf90_r 7.1.1.3 in 64-bit mode on AIX 5.1
+######################################################
+
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI # remove -lmass if you do not have the mass library
+#AIX-PWR3-64bit-MPI # performance will be reduced by 50%. Get the lib from
+#AIX-PWR3-64bit-MPI # IBM's WWW site. It is worth it!
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI LFLAGS= -lC -bloadmap:map.ld -q64 -qwarn64 \
+#AIX-PWR3-64bit-MPI -lmass -lessl_r -lblas 
+#AIX-PWR3-64bit-MPI LFLAGS2= 
+#AIX-PWR3-64bit-MPI # flag for architecture:
+#AIX-PWR3-64bit-MPI ARCH=aix-mpi
+#AIX-PWR3-64bit-MPI 
+#AIX-PWR3-64bit-MPI # code conversion call:
+#AIX-PWR3-64bit-MPI #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR3-64bit-MPI #for a uniform calling statement we use a dummy script
+#AIX-PWR3-64bit-MPI CONVERT=2aix-mpi.pl $<
+#AIX-PWR3-64bit-MPI 
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI # Flags for optimization:
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI FFLAGS= -O3 -qarch=pwr3 -qfloat=fltint:rsqrt \
+#AIX-PWR3-64bit-MPI  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR3-64bit-MPI  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr3 \
+#AIX-PWR3-64bit-MPI  -qfixed -q64 -qspill=32648 -qhalt=S
+#AIX-PWR3-64bit-MPI # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR3-64bit-MPI DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR3-64bit-MPI -qfixed -qsave -qarch=pwr3 -qtune=pwr3 -q64 -qnohot -qstrict -qhalt=S
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI # Flags for debugging::
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#AIX-PWR3-64bit-MPI #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-64bit-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q64
+#AIX-PWR3-64bit-MPI #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR3-64bit-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr3 -q64 -qhot 
+#AIX-PWR3-64bit-MPI 
+#AIX-PWR3-64bit-MPI CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q64
+#AIX-PWR3-64bit-MPI 
+#AIX-PWR3-64bit-MPI FLAGS2=-bloadmap:$*.ld
+#AIX-PWR3-64bit-MPI 
+#AIX-PWR3-64bit-MPI F77=mpxlf90_r
+#AIX-PWR3-64bit-MPI F90=mpxlf90_r
+#AIX-PWR3-64bit-MPI LD=mpcc_r \
+#AIX-PWR3-64bit-MPI  -lmpi_r -lvtd_r -lxlf90_r \
+#AIX-PWR3-64bit-MPI -lxlopt -lpthreads -lxlf -lxlomp_ser -lm_r -lm -lc_r -lc \ 
+#AIX-PWR3-64bit-MPI  -qxlf90=noautodealloc:nosignedzero \
+#AIX-PWR3-64bit-MPI  -binitfini:poe_remote_main
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI # Flags for QD package:
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI CC_OPTS=-DHAS_FMA
+#AIX-PWR3-64bit-MPI C_QD_OPTS=-q64 -qarch=pwr3 -qtune=pwr3 -qstrict -O3
+#AIX-PWR3-64bit-MPI CC=mpcc_r -q64
+#AIX-PWR3-64bit-MPI CC_FLAGS=-q64 -qarch=pwr3 -qtune=pwr3 -qstrict -O3
+#AIX-PWR3-64bit-MPI AR=ar -X64
+#AIX-PWR3-64bit-MPI AR_FLAGS=-crv
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI # Flags for SuperLU package:
+#AIX-PWR3-64bit-MPI #
+#AIX-PWR3-64bit-MPI ARCH_SLU=ar -X64
+#AIX-PWR3-64bit-MPI ARCHFLAGS_SLU=-crv
+#AIX-PWR3-64bit-MPI CC_SLU=mpcc_r -q64
+#AIX-PWR3-64bit-MPI CFLAGS_SLU=$(C_QD_OPTS)
+#AIX-PWR3-64bit-MPI FORTRAN=$(F90)
+#AIX-PWR3-64bit-MPI LOADER=$(LD)
+#AIX-PWR3-64bit-MPI LOADOPTS=
+#AIX-PWR3-64bit-MPI CDEFS=-DNoChange
+
+######################################################
+# IBM RS/6000, xlf90_r 7.1.1.3 in PWR4 64-bit mode on AIX 5.1
+######################################################
+
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit # remove -lmass if you do not have the mass library
+#AIX-PWR4-64bit # performance will be reduced by 50%. Get the lib from
+#AIX-PWR4-64bit # IBM's WWW site. It is worth it!
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit LFLAGS= -lC -bloadmap:map.ld -q64 -qwarn64 \
+#AIX-PWR4-64bit -lmass -lessl_r -lblas 
+#AIX-PWR4-64bit LFLAGS2= 
+#AIX-PWR4-64bit # flag for architecture:
+#AIX-PWR4-64bit ARCH=aix
+#AIX-PWR4-64bit 
+#AIX-PWR4-64bit # code conversion call:
+#AIX-PWR4-64bit #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR4-64bit #for a uniform calling statement we use a dummy script
+#AIX-PWR4-64bit CONVERT=2aix.pl $<
+#AIX-PWR4-64bit 
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit # Flags for optimization:
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit FFLAGS= -O3 -qarch=pwr4 -qfloat=fltint:rsqrt \
+#AIX-PWR4-64bit  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR4-64bit  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr4 \
+#AIX-PWR4-64bit  -qfixed -q64 -qspill=32648 -qhalt=S
+#AIX-PWR4-64bit # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR4-64bit DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR4-64bit -qfixed -qsave -qarch=pwr4 -qtune=pwr4 -q64 -qnohot -qstrict -qhalt=S
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit # Flags for debugging::
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#AIX-PWR4-64bit #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64
+#AIX-PWR4-64bit #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64 -qnohot 
+#AIX-PWR4-64bit 
+#AIX-PWR4-64bit CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q64
+#AIX-PWR4-64bit 
+#AIX-PWR4-64bit FLAGS2=-bloadmap:$*.ld
+#AIX-PWR4-64bit 
+#AIX-PWR4-64bit F77=xlf90_r
+#AIX-PWR4-64bit F90=xlf90_r
+#AIX-PWR4-64bit F95=xlf95_r
+#AIX-PWR4-64bit LD=cc_r \
+#AIX-PWR4-64bit  -lxlf90_r \
+#AIX-PWR4-64bit  -lxlopt -lpthreads -lxlf -lxlomp_ser -lm_r -lm -lc_r -lc \
+#AIX-PWR4-64bit  -qxlf90=noautodealloc:nosignedzero \
+#AIX-PWR4-64bit  -I/usr/lpp/ssp/css/include -llapi_r \
+#AIX-PWR4-64bit  -lpthreads -L/usr/lpp/ppe.poe/lib/threads
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit # Flags for QD package:
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit CC_OPTS=-DHAS_FMA
+#AIX-PWR4-64bit C_QD_OPTS=-q64 -qarch=pwr4 -qtune=pwr4 -qstrict -O3
+#AIX-PWR4-64bit CC=mpcc_r -q64
+#AIX-PWR4-64bit CC_FLAGS=-q64 -qarch=pwr4 -qtune=pwr4 -qstrict -O3
+#AIX-PWR4-64bit AR=ar -X64
+#AIX-PWR4-64bit AR_FLAGS=-crv
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit # Flags for SuperLU package:
+#AIX-PWR4-64bit #
+#AIX-PWR4-64bit ARCH_SLU=ar -X64
+#AIX-PWR4-64bit ARCHFLAGS_SLU=-crv
+#AIX-PWR4-64bit CC_SLU=cc_r -q64
+#AIX-PWR4-64bit CFLAGS_SLU=$(C_QD_OPTS)
+#AIX-PWR4-64bit FORTRAN=$(F90)
+#AIX-PWR4-64bit LOADER=$(LD)
+#AIX-PWR4-64bit LOADOPTS=
+#AIX-PWR4-64bit CDEFS=-DNoChange
+
+######################################################
+# IBM RS/6000, xlf90_r 7.1.1.3 in PWR4 64-bit mode on AIX 5.1, openMP
+######################################################
+
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP # remove -lmass if you do not have the mass library 
+#AIX-PWR4-64bit-SMP # performance will be reduced by 50%. Get the lib from
+#AIX-PWR4-64bit-SMP # IBM's WWW site. It is worth it!
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP LFLAGS= -lC -bloadmap:map.ld -q64 -qwarn64 \
+#AIX-PWR4-64bit-SMP -lmass -lessl_r -lblas  
+#AIX-PWR4-64bit-SMP LFLAGS2= 
+#AIX-PWR4-64bit-SMP # flag for architecture:
+#AIX-PWR4-64bit-SMP ARCH=aix
+#AIX-PWR4-64bit-SMP 
+#AIX-PWR4-64bit-SMP # code conversion call:
+#AIX-PWR4-64bit-SMP #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR4-64bit-SMP #for a uniform calling statement we use a dummy script
+#AIX-PWR4-64bit-SMP CONVERT=2aix.pl $<
+#AIX-PWR4-64bit-SMP 
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP # Flags for optimization:
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP FFLAGS= -O3 -qarch=pwr4 -qfloat=fltint:rsqrt \
+#AIX-PWR4-64bit-SMP  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR4-64bit-SMP  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=pwr4 \
+#AIX-PWR4-64bit-SMP  -qfixed -q64 -qspill=32648 -qhalt=S \
+#AIX-PWR4-64bit-SMP  -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR4-64bit-SMP DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR4-64bit-SMP -qfixed -qsave -qarch=pwr4 -qtune=pwr4 -q64 -qnohot -qstrict -qhalt=S -qsmp=noauto -qsource -qreport=smplist
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP # Flags for debugging::
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#AIX-PWR4-64bit-SMP #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR4-64bit-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64
+#AIX-PWR4-64bit-SMP #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR4-64bit-SMP #-qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64 -qhot 
+#AIX-PWR4-64bit-SMP 
+#AIX-PWR4-64bit-SMP CFLAGS=-DSUN -DAIX43 -DGOODF90 -O -q64 
+#AIX-PWR4-64bit-SMP BENCHFLAGS=$(FFLAGS)
+#AIX-PWR4-64bit-SMP 
+#AIX-PWR4-64bit-SMP FLAGS2=-bloadmap:$*.ld
+#AIX-PWR4-64bit-SMP 
+#AIX-PWR4-64bit-SMP F77=xlf90_r
+#AIX-PWR4-64bit-SMP F90=xlf90_r
+#AIX-PWR4-64bit-SMP LD=cc_r \
+#AIX-PWR4-64bit-SMP  -lxlf90_r \
+#AIX-PWR4-64bit-SMP  -lxlopt -lpthreads -lxlf -lxlomp_ser -lm_r -lm -lc_r -lc \
+#AIX-PWR4-64bit-SMP  -qxlf90=noautodealloc:nosignedzero \
+#AIX-PWR4-64bit-SMP  -I/usr/lpp/ssp/css/include -llapi_r \
+#AIX-PWR4-64bit-SMP  -lpthreads -L/usr/lpp/ppe.poe/lib/threads
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP # Flags for QD package:
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP CC_OPTS=-DHAS_FMA
+#AIX-PWR4-64bit-SMP C_QD_OPTS=-q64 -qarch=pwr4 -qtune=pwr4 -qstrict -O3
+#AIX-PWR4-64bit-SMP CC=mpcc_r -q64
+#AIX-PWR4-64bit-SMP CC_FLAGS=-q64 -qarch=pwr4 -qtune=pwr4 -qstrict -O3
+#AIX-PWR4-64bit-SMP AR=ar -X64
+#AIX-PWR4-64bit-SMP AR_FLAGS=-crv
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP # Flags for SuperLU package:
+#AIX-PWR4-64bit-SMP #
+#AIX-PWR4-64bit-SMP ARCH_SLU=ar
+#AIX-PWR4-64bit-SMP ARCHFLAGS_SLU=-crv
+#AIX-PWR4-64bit-SMP CC_SLU=cc_r -q64
+#AIX-PWR4-64bit-SMP CFLAGS_SLU=$(C_QD_OPTS)
+#AIX-PWR4-64bit-SMP FORTRAN=$(F90)
+#AIX-PWR4-64bit-SMP LOADER=$(LD)
+#AIX-PWR4-64bit-SMP LOADOPTS=
+#AIX-PWR4-64bit-SMP CDEFS=-DNoChange
+
+######################################################
+# IBM RS/6000, PWR4 mpxlf90_r 8.1.0.0 in 64-bit mode on AIX 5.1
+######################################################
+
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI # remove -lmass if you do not have the mass library
+#AIX-PWR4-64bit-MPI # performance will be reduced by 50%. Get the lib from
+#AIX-PWR4-64bit-MPI # IBM's WWW site. It is worth it!
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI LFLAGS= -lC -bloadmap:map.ld -q64 -qwarn64 \
+#AIX-PWR4-64bit-MPI -lmass -lessl_r -lblas
+#AIX-PWR4-64bit-MPI LFLAGS2= 
+#AIX-PWR4-64bit-MPI # flag for architecture:
+#AIX-PWR4-64bit-MPI ARCH=aix-mpi
+#AIX-PWR4-64bit-MPI 
+#AIX-PWR4-64bit-MPI # code conversion call:
+#AIX-PWR4-64bit-MPI #CONVERT=mkdir tmp; cp $< tmp
+#AIX-PWR4-64bit-MPI #for a uniform calling statement we use a dummy script
+#AIX-PWR4-64bit-MPI CONVERT=2aix-mpi.pl $<
+#AIX-PWR4-64bit-MPI 
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI # Flags for optimization:
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI FFLAGS= -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#AIX-PWR4-64bit-MPI  -qnohot -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#AIX-PWR4-64bit-MPI  -qmaxmem=-1 -qnozerosize -qsave -qsigtrap -qstrict -qtune=auto \
+#AIX-PWR4-64bit-MPI  -qfixed -q64 -qspill=32648 -qhalt=S
+#AIX-PWR4-64bit-MPI # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#AIX-PWR4-64bit-MPI DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#AIX-PWR4-64bit-MPI -qfixed -qsave -qarch=auto -qtune=auto -q64 -qnohot -qstrict -qhalt=S
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI # Flags for debugging::
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#AIX-PWR4-64bit-MPI #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR4-64bit-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64
+#AIX-PWR4-64bit-MPI #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 \
+#AIX-PWR4-64bit-MPI #-qflttrap=enab:ov:zero:inv -qarch=pwr4 -q64 -qhot 
+#AIX-PWR4-64bit-MPI 
+#AIX-PWR4-64bit-MPI CFLAGS=-DSUN -DAIX43 -DGOODF90 -O3 -q64 -qarch=auto -qtune=auto -qstrict
+#AIX-PWR4-64bit-MPI 
+#AIX-PWR4-64bit-MPI FLAGS2=-bloadmap:$*.ld
+#AIX-PWR4-64bit-MPI 
+#AIX-PWR4-64bit-MPI F77=mpxlf90_r
+#AIX-PWR4-64bit-MPI F90=mpxlf90_r
+#AIX-PWR4-64bit-MPI LD=mpcc_r \
+#AIX-PWR4-64bit-MPI    -L/usr/lpp/ppe.poe/lib \
+#AIX-PWR4-64bit-MPI -L/usr/lpp/ppe.poe/lib/us \
+#AIX-PWR4-64bit-MPI  -lmpi_r -lvtd_r -lxlf90_r \
+#AIX-PWR4-64bit-MPI -lxlopt -lpthreads -lxlf -lxlomp_ser -lm_r -lm -lc_r -lc \ 
+#AIX-PWR4-64bit-MPI  -qxlf90=noautodealloc:nosignedzero \
+#AIX-PWR4-64bit-MPI  -binitfini:poe_remote_main
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI # Flags for QD package:
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI CC_OPTS=-DHAS_FMA
+#AIX-PWR4-64bit-MPI C_QD_OPTS=-q64 -qarch=auto -qtune=auto -qstrict -O3
+#AIX-PWR4-64bit-MPI CC=mpcc_r -q64
+#AIX-PWR4-64bit-MPI CC_FLAGS=-q64 -qarch=auto -qtune=auto -qstrict -O3
+#AIX-PWR4-64bit-MPI AR=ar -X64
+#AIX-PWR4-64bit-MPI AR_FLAGS=-crv
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI # Flags for SuperLU package:
+#AIX-PWR4-64bit-MPI #
+#AIX-PWR4-64bit-MPI ARCH_SLU=ar -X64
+#AIX-PWR4-64bit-MPI ARCHFLAGS_SLU=-crv
+#AIX-PWR4-64bit-MPI CC_SLU=cc_r -q64
+#AIX-PWR4-64bit-MPI CFLAGS_SLU=$(C_QD_OPTS)
+#AIX-PWR4-64bit-MPI FORTRAN=$(F90)
+#AIX-PWR4-64bit-MPI LOADER=$(LD)
+#AIX-PWR4-64bit-MPI LOADOPTS=
+#AIX-PWR4-64bit-MPI CDEFS=-DNoChange
+
+######################################################
+# IBM RS/6000, xlf90 3.2
+######################################################
+
+#AIX #
+#AIX # remove -lmass if you do not have the mass library
+#AIX # performance will be reduced by 50%. Get the lib from
+#AIX # IBM's WWW site. It is worth it!
+#AIX #
+#AIX LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas \
+#AIX  -bnso -bI:/usr/lib/syscalls.exp -bmaxdata:0x20000000
+#AIX 
+#AIX LFLAGS2= 
+#AIX # flag for architecture:
+#AIX ARCH=aix
+#AIX 
+#AIX # code conversion call:
+#AIX #CONVERT=mkdir tmp; cp $< tmp
+#AIX #for a uniform calling statement we use a dummy script
+#AIX CONVERT=2aix.pl $<
+#AIX 
+#AIX #
+#AIX # Flags for optimization:
+#AIX #
+#AIX FFLAGS= -O3 -qstrict -qmaxmem=-1 -qextchk \
+#AIX -qfixed -qsave -qarch=pwr -qtune=pwr 
+#AIX DFLAGS=-bloadmap:$*.ld -c -qmaxmem=-1 -qextchk \
+#AIX -qfixed -qsave -qarch=pwr -qtune=pwr
+#AIX #
+#AIX # Flags for crazy optimization:
+#AIX #
+#AIX CRAZYFLAGS= -qattr -O3 -qmaxmem=-1 -qextchk \
+#AIX -qfixed -qsave -qarch=pwr -qsource -qstrict \
+#AIX -qipa=limit=9  -Q+locate:fipol:search \
+#AIX -Q+scint:sccvt:applmb:srccvt:fsopt:tridag:ng2:updsrc
+#AIX 
+#AIX #
+#AIX # Flags for debugging::
+#AIX #
+#AIX #LFLAGS=-bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX ###-bnso -bI:/usr/lib/syscalls.exp # -bmaxdata:0x20000000
+#AIX #FFLAGS= -g -qsave -qextchk -qfixed \
+#AIX #-qflttrap=enab:ov:zero:inv -qarch=pwr
+#AIX #DFLAGS= -g -c -qsave -qextchk -qfixed \
+#AIX #-qflttrap=enab:ov:zero:inv -qarch=pwr
+#AIX 
+#AIX FLAGS2=-bloadmap:$*.ld
+#AIX 
+#AIX F77=xlf90
+#AIX F90=xlf90
+#AIX LD=xlf90
+#AIX 
+
+######################################################
+# IBM RS/6000, xlf90 3.2 with MPICH
+######################################################
+
+#AIX-MPICH #
+#AIX-MPICH # remove -lmass if you do not have the mass library
+#AIX-MPICH # performance will be reduced by 50%. Get the lib from
+#AIX-MPICH # IBM's WWW site. It is worth it!
+#AIX-MPICH #
+#AIX-MPICH LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas \
+#AIX-MPICH  -bnso -bI:/usr/lib/syscalls.exp -bmaxdata:0x20000000 \
+#AIX-MPICH  -bI:/usr/include/piofs/piofs.exp -L/usr/lib/piofs -lPiofsFortran
+#AIX-MPICH 
+#AIX-MPICH LFLAGS2= 
+#AIX-MPICH # flag for architecture:
+#AIX-MPICH ARCH=aix-mpi
+#AIX-MPICH 
+#AIX-MPICH # code conversion call:
+#AIX-MPICH #CONVERT=mkdir tmp; cp $< tmp
+#AIX-MPICH #for a uniform calling statement we use a dummy script
+#AIX-MPICH CONVERT=2aix-mpi.pl $<
+#AIX-MPICH 
+#AIX-MPICH #
+#AIX-MPICH # Flags for optimization:
+#AIX-MPICH #
+#AIX-MPICH FFLAGS= -O3 -qstrict -qmaxmem=-1 \
+#AIX-MPICH -qfixed -qsave -qarch=pwr -qtune=pwr
+#AIX-MPICH DFLAGS=-bloadmap:$*.ld -c -qmaxmem=-1 \
+#AIX-MPICH -qfixed -qsave -qarch=pwr -qtune=pwr
+#AIX-MPICH #
+#AIX-MPICH # Flags for crazy optimization:
+#AIX-MPICH #
+#AIX-MPICH CRAZYFLAGS= -qattr -O3 -qmaxmem=-1 -qextchk \
+#AIX-MPICH -qfixed -qsave -qarch=pwr -qsource -qstrict \
+#AIX-MPICH -qipa=limit=9  -Q+locate:fipol:search \
+#AIX-MPICH -Q+scint:sccvt:applmb:srccvt:fsopt:tridag:ng2:updsrc
+#AIX-MPICH 
+#AIX-MPICH #
+#AIX-MPICH # Flags for debugging::
+#AIX-MPICH #
+#AIX-MPICH #LFLAGS=-bC:calls.ld -bloadmap:map.ld -lessl -lblas
+#AIX-MPICH ###-bnso -bI:/usr/lib/syscalls.exp # -bmaxdata:0x20000000
+#AIX-MPICH #FFLAGS= -g -qsave -qextchk -qfixed \
+#AIX-MPICH #-qflttrap=enab:ov:zero:inv -qarch=pwr
+#AIX-MPICH #DFLAGS= -g -c -qsave -qextchk -qfixed \
+#AIX-MPICH #-qflttrap=enab:ov:zero:inv -qarch=pwr
+#AIX-MPICH 
+#AIX-MPICH FLAGS2=-bloadmap:$*.ld
+#AIX-MPICH 
+#AIX-MPICH F77=mpif77
+#AIX-MPICH F90=mpif77
+#AIX-MPICH LD=mpif77
+#AIX-MPICH 
+
+######################################################
+# IBM RS/6000, MPIF 4.1
+######################################################
+
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 # remove -lmass if you do not have the mass library
+#AIX-MPIF4.1 # performance will be reduced by 50%. Get the lib from
+#AIX-MPIF4.1 # IBM's WWW site. It is worth it!
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 LFLAGS= -bloadmap:map.ld -lmass -lesslp2 -lblas -us \
+#AIX-MPIF4.1  -bmaxdata:0x20000000 \
+#AIX-MPIF4.1  -bI:/usr/include/piofs/piofs.exp -L/usr/lib/piofs -lPiofsFortran
+#AIX-MPIF4.1 
+#AIX-MPIF4.1 #LFLAGS= -bloadmap:map.ld -lmass -lessl -lblas \
+#AIX-MPIF4.1 # -bnso -bI:/usr/lib/syscalls.exp -bmaxdata:0x20000000 
+#AIX-MPIF4.1 
+#AIX-MPIF4.1 # flag for architecture:
+#AIX-MPIF4.1 ARCH=aix-mpi
+#AIX-MPIF4.1 
+#AIX-MPIF4.1 # code conversion call:
+#AIX-MPIF4.1 #CONVERT=mkdir tmp; cp $< tmp
+#AIX-MPIF4.1 #for a uniform calling statement we use a dummy script
+#AIX-MPIF4.1 CONVERT=2aix.pl $<
+#AIX-MPIF4.1 
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 # Flags for optimization:
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 FFLAGS= -O3 -qstrict -qmaxmem=-1 \
+#AIX-MPIF4.1 -qfixed -qsave -qarch=pwr2 -qtune=pwr2 -qhalt=S
+#AIX-MPIF4.1 DFLAGS=-bloadmap:$*.ld -qmaxmem=-1 \
+#AIX-MPIF4.1 -qfixed -qsave -qarch=pwr2 -qtune=pwr2 -qhalt=S
+#AIX-MPIF4.1 #FFLAGS=$(DFLAGS)
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 # Flags for crazy optimization:
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 CRAZYFLAGS= -qattr -O3 -qmaxmem=-1 -qextchk \
+#AIX-MPIF4.1 -qfixed -qsave -qarch=pwr -qsource -qstrict \
+#AIX-MPIF4.1 -qipa=limit=9  -Q+locate:fipol:search \
+#AIX-MPIF4.1 -Q+scint:sccvt:applmb:srccvt:fsopt:tridag:ng2:updsrc
+#AIX-MPIF4.1 
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 # Flags for debugging::
+#AIX-MPIF4.1 #
+#AIX-MPIF4.1 #LFLAGS=-bC:calls.ld -bloadmap:map.ld -lesslp2 -lblas -bmaxdata:0x19000000
+#AIX-MPIF4.1 ####-bnso -bI:/usr/lib/syscalls.exp # -bmaxdata:0x20000000
+#AIX-MPIF4.1 #FFLAGS=-C -g -qsave -qextchk -qfixed \
+#AIX-MPIF4.1 #-qflttrap=enab:ov:zero:inv -qarch=pwr2 -qhalt=S
+#AIX-MPIF4.1 #DFLAGS=-C -g -c -qsave -qextchk -qfixed \
+#AIX-MPIF4.1 #-qflttrap=enab:ov:zero:inv -qarch=pwr2 -qhalt=S
+#AIX-MPIF4.1 # 
+#AIX-MPIF4.1 #FLAGS2=-bloadmap:$*.ld 
+#AIX-MPIF4.1 # 
+#AIX-MPIF4.1  
+#AIX-MPIF4.1 F77=mpxlf_r
+#AIX-MPIF4.1 F90=mpxlf_r
+#AIX-MPIF4.1 LD=mpxlf_r
+#AIX-MPIF4.1 
+
+######################################################
+# IBM RS/6000, xlf 2.3
+######################################################
+#IBM-XLF2
+#IBM-XLF2 #
+#IBM-XLF2 # remove -lmass if you do not have the mass library
+#IBM-XLF2 # performance will be reduced by 50%. Get the lib from
+#IBM-XLF2 # IBM's WWW site. It is worth it!
+#IBM-XLF2 #
+#IBM-XLF2 LFLAGS=-bC:calls.ld -bloadmap:map.ld -lmass -lessl -lblas \
+#IBM-XLF2 -bnso -bI:/usr/lib/syscalls.exp # -bmaxdata:0x20000000
+#IBM-XLF2
+#IBM-XLF2 # flag for architecture:
+#IBM-XLF2 ARCH=aix
+#IBM-XLF2
+#IBM-XLF2 #
+#IBM-XLF2 # Flags for optimization:
+#IBM-XLF2 #
+#IBM-XLF2 FFLAGS= -qattr -O3 -NT100000 -NA50000 -NQ50000 -ND10000 \
+#IBM-XLF2 -qmaxmem=100000 -qextchk # -qarch=pwr -qstrict # -bnso
+#IBM-XLF2 DFLAGS=-bloadmap:$*.ld -c -ND10000 -NT100000 -NA50000 -NQ50000 \
+#IBM-XLF2 -qextchk # -qarch=pwr #-bnso
+#IBM-XLF2
+#IBM-XLF2 #
+#IBM-XLF2 # Flags for debugging::
+#IBM-XLF2 #
+#IBM-XLF2 #FFLAGS= -C -g -ND10000 -NT100000 -NA50000 -NQ50000 -qattr -qlistopt \
+#IBM-XLF2 #-qextchk -qxflag=xalias -qflttrap=enab:ov:zero:inv # -qarch=pwr #-bnso
+#IBM-XLF2 #DFLAGS= -C -qattr -qlistopt -qflttrap=enab:ov:zero:inv \
+#IBM-XLF2 #-bloadmap:$*.ld -c -g -ND10000 -NT100000 -NA50000 -NQ50000 -qextchk
+#IBM-XLF2
+#IBM-XLF2 FLAGS2=-bloadmap:$*.ld
+#IBM-XLF2
+#IBM-XLF2 F77=xlf
+
+######################################################
+# Cray, cf90
+######################################################
+#CRAY-CF90 
+#CRAY-CF90 # flag for architecture:
+#CRAY-CF90 ARCH=cray
+#CRAY-CF90 
+#CRAY-CF90 # code conversion call:
+#CRAY-CF90 CONVERT=2cray.pl $<
+#CRAY-CF90 
+#CRAY-CF90 FLAGS2=
+#CRAY-CF90 LFLAGS=  
+#CRAY-CF90 
+#CRAY-CF90 # Flags for optimization:
+#CRAY-CF90 
+#CRAY-CF90 FFLAGS= -ev -dp -i 64 -O bl,loopalign -f fixed \
+#CRAY-CF90 -O scalar3,task0,vector3 -p ~/phxdev
+#CRAY-CF90 
+#CRAY-CF90 DFLAGS= -ev -dp -i 64 -f fixed \
+#CRAY-CF90 -O scalar0,task0,vector0 -c -p ~/phxdev
+#CRAY-CF90 
+#CRAY-CF90 # Flags for debugging::
+#CRAY-CF90 
+#CRAY-CF90 #FFLAGS= -Zv -dp -G -Wd"-dp" -Wf"-Rab -i 64 -a static -dp -emz"
+#CRAY-CF90 
+#CRAY-CF90 #FFLAGS= -ev -dp -i 64 -f fixed -O0
+#CRAY-CF90 
+#CRAY-CF90 F77=f90
+#CRAY-CF90 F90=f90
+#CRAY-CF90 LD=f90
+
+
+######################################################
+# Cray T3E, cf90 serial
+######################################################
+#T3E 
+#T3E # flag for architecture:
+#T3E ARCH=t3e
+#T3E 
+#T3E # code conversion call:
+#T3E CONVERT=2t3e.pl $<
+#T3E 
+#T3E FLAGS2=
+#T3E LFLAGS=
+#T3E 
+#T3E # Flags 
+#T3E 
+#T3E FFLAGS= -euv -dp  -f fixed \
+#T3E -O 3 -O noieeeconform -p ~/phxdev
+#T3E 
+#T3E DFLAGS= -euv -dp -f fixed \
+#T3E -O 0 -c -p ~/phxdev
+#T3E 
+#T3E CFLAGS=-O3 -DT3E
+#T3E 
+#T3E # Flags for debugging::
+#T3E 
+#T3E #FFLAGS= -Zv -dp -G -Wd"-dp" -Wf"-Rab -i 64 -a static -dp -emz"
+#T3E 
+#T3E #FFLAGS= -ev -dp -i 64 -f fixed -O0
+#T3E 
+#T3E F77=f90
+#T3E LD=f90
+
+######################################################
+# Cray T3E, cf90 MPI
+######################################################
+#T3E-MPI 
+#T3E-MPI # flag for architecture:
+#T3E-MPI ARCH=t3e-mpi
+#T3E-MPI 
+#T3E-MPI # code conversion call:
+#T3E-MPI CONVERT=2t3e.pl $<
+#T3E-MPI 
+#T3E-MPI FLAGS2=
+#T3E-MPI LFLAGS=
+#T3E-MPI 
+#T3E-MPI # Flags 
+#T3E-MPI 
+#T3E-MPI FFLAGS= -euv -dp  -f fixed \
+#T3E-MPI -O 3 -O noieeeconform -p ~/phxdev
+#T3E-MPI 
+#T3E-MPI DFLAGS= -euv -dp -f fixed \
+#T3E-MPI -O 0 -c -p ~/phxdev
+#T3E-MPI 
+#T3E-MPI CFLAGS=-c -O3 -DT3E
+#T3E-MPI 
+#T3E-MPI # Flags for debugging::
+#T3E-MPI 
+#T3E-MPI #FFLAGS= -Zv -dp -G -Wd"-dp" -Wf"-Rab -i 64 -a static -dp -emz"
+#T3E-MPI 
+#T3E-MPI #FFLAGS= -ev -dp -i 64 -f fixed -O0
+#T3E-MPI 
+#T3E-MPI F77=f90
+#T3E-MPI F90=f90
+#T3E-MPI LD=f90
+
+######################################################
+# Cray
+######################################################
+#Cray
+#Cray # flag for architecture:
+#Cray ARCH=cray
+#Cray
+#Cray FLAGS2=
+#Cray DFLAGS= -Zc -dp -Wf"-i 64 -a static -dp -emz" -c
+#Cray #LFLAGS=  -l prof
+#Cray LFLAGS=
+#Cray
+#Cray # Flags for optimization:
+#Cray
+#Cray FFLAGS= -Zv  -dp -Wf"-i 64 -a static -dp -em -obl,loopalign"
+#Cray DFLAGS=$(FFLAGS) -c
+#Cray
+#Cray # Flags for debugging::
+#Cray
+#Cray #FFLAGS= -Zv -dp -G -Wd"-dp" -Wf"-Rab -i 64 -a static -dp -emz"
+#Cray
+#Cray F77=cf77
+#Cray F90=cf77
+#Cray LD=cf77
+
+######################################################
+# HP-UX 10.20 on PA-8000 processors (only 780)
+# adapted for ATLAS BLAS library
+######################################################
+#HPUX-PA8000 
+#HPUX-PA8000 # flag for architecture:
+#HPUX-PA8000 ARCH=hpux
+#HPUX-PA8000 
+#HPUX-PA8000 # code conversion call:
+#HPUX-PA8000 CONVERT=2hp.pl $<
+#HPUX-PA8000 
+#HPUX-PA8000 LIBDIR=
+#HPUX-PA8000 F77=f90
+#HPUX-PA8000 F90=f90
+#HPUX-PA8000 LD=f90
+#HPUX-PA8000 FLAGS2=
+#HPUX-PA8000 LFLAGS=  -llapack -lblas
+#HPUX-PA8000 LFLAGS=  -llapack -lf77blas -latlas -lcblas   \
+#HPUX-PA8000 -L/opt/gcc/lib -lstdc++ -L/opt/gcc/lib/gcc-lib/hppa1.1-hp-hpux10.20/3.0.1 -lgcc -lm -ldld
+#HPUX-PA8000 # Flags for optimization:
+#HPUX-PA8000 #
+#HPUX-PA8000 OPT=+O3 +Ovectorize +Onolimit +Ofastaccess +Oloop_unroll \
+#HPUX-PA8000 +Oaggressive +Onofltacc +Olibcalls +Oprocelim +Oinfo +Odataprefetch \
+#HPUX-PA8000 +Oentrysched +Oregionsched +DA2.0 +DS2.0 +Onoinline
+#HPUX-PA8000 FFLAGS= -K $(OPT) +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000 DFLAGS= -K -c +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000 CFLAGS=-Ae -O -DSUN -D_LARGEFILE_SOURCE -O -DGOODF90 -DHPUX
+#HPUX-PA8000 
+#HPUX-PA8000 #
+#HPUX-PA8000 # Flags for debugging::
+#HPUX-PA8000 #
+#HPUX-PA8000 #FFLAGS= +FPzD -C -g -K +U77 +O0 +check=all
+#HPUX-PA8000 #DFLAGS= +FPzD -C -g -K +U77 +O0 +check=all
+#HPUX-PA8000 
+#HPUX-PA8000 #
+#HPUX-PA8000 # Flags for QD package:
+#HPUX-PA8000 #
+#HPUX-PA8000 CC_OPTS= 
+#HPUX-PA8000 C_QD_OPTS= 
+#HPUX-PA8000 CC=g++
+#HPUX-PA8000 CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#HPUX-PA8000 AR=ar
+#HPUX-PA8000 AR_FLAGS=-crv
+
+
+
+######################################################
+# HP-UX 10.20, PA-8000, SPP2000
+######################################################
+#HPUX-PA8000-MPI 
+#HPUX-PA8000-MPI # flag for architecture:
+#HPUX-PA8000-MPI ARCH=hpux-mpi
+#HPUX-PA8000-MPI 
+#HPUX-PA8000-MPI # code conversion call:
+#HPUX-PA8000-MPI CONVERT=2hp-mpi.pl $<
+#HPUX-PA8000-MPI 
+#HPUX-PA8000-MPI LIBDIR=
+#HPUX-PA8000-MPI F77=mpif90
+#HPUX-PA8000-MPI F90=mpif90
+#HPUX-PA8000-MPI LD=mpif90
+#HPUX-PA8000-MPI FLAGS2=
+#HPUX-PA8000-MPI LFLAGS=  -llapack -lblas
+#HPUX-PA8000-MPI LFLAGS= -Wl,-L/opt/mlib/lib/pa2.0parallel -Wl,+tm,S2000 -llapack -lblas -lpthread -lcps -lpthread -lail
+#HPUX-PA8000-MPI #LFLAGS= -Wl,-L/opt/mlib/lib/pa2.0parallel -Wl,+tm,S2000,+parallel -llapack -lblas -lpthread -lcps -lpthread -lail
+#HPUX-PA8000-MPI # Flags for optimization:
+#HPUX-PA8000-MPI #
+#HPUX-PA8000-MPI OPT=+O3 +Ovectorize +Onolimit +Ofastaccess +Oloop_unroll \
+#HPUX-PA8000-MPI +Oaggressive +Onofltacc +Olibcalls +Oprocelim +Oinfo +Odataprefetch \
+#HPUX-PA8000-MPI +Oentrysched +Oregionsched +DA2.0 +DS2.0 +Onoinline
+#HPUX-PA8000-MPI FFLAGS= -K $(OPT) +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000-MPI DFLAGS= -K -c +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000-MPI CFLAGS=-Ae -O -DGOODF90 -DSUN -D_LARGEFILE_SOURCE -O -DHPUX
+#HPUX-PA8000-MPI 
+#HPUX-PA8000-MPI #
+#HPUX-PA8000-MPI # Flags for debugging::
+#HPUX-PA8000-MPI #
+#HPUX-PA8000-MPI #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive
+
+######################################################
+# HP-UX 10.20 on PA-8000 processors (only 780), MPICH
+######################################################
+#HPUX-PA8000-MPICH 
+#HPUX-PA8000-MPICH # flag for architecture:
+#HPUX-PA8000-MPICH ARCH=hpux-mpi
+#HPUX-PA8000-MPICH 
+#HPUX-PA8000-MPICH # code conversion call:
+#HPUX-PA8000-MPICH CONVERT=2hp-mpi.pl $<
+#HPUX-PA8000-MPICH 
+#HPUX-PA8000-MPICH LIBDIR=
+#HPUX-PA8000-MPICH F77=mpif77
+#HPUX-PA8000-MPICH F90=mpif77
+#HPUX-PA8000-MPICH LD=mpif77
+#HPUX-PA8000-MPICH FLAGS2=
+#HPUX-PA8000-MPICH LFLAGS=  -llapack -lblas
+#HPUX-PA8000-MPICH # Flags for optimization:
+#HPUX-PA8000-MPICH #
+#HPUX-PA8000-MPICH OPT=+O3 +Ovectorize +Onolimit +Ofastaccess +Oloop_unroll \
+#HPUX-PA8000-MPICH +Oaggressive +Onofltacc +Olibcalls +Oprocelim +Oinfo +Odataprefetch \
+#HPUX-PA8000-MPICH +Oentrysched +Oregionsched +DA2.0 +DS2.0 +Onoinline
+#HPUX-PA8000-MPICH FFLAGS= -K $(OPT) +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000-MPICH DFLAGS= -K -c +FPD +U77 -Wl,-O,+n
+#HPUX-PA8000-MPICH 
+#HPUX-PA8000-MPICH #
+#HPUX-PA8000-MPICH # Flags for debugging::
+#HPUX-PA8000-MPICH #
+#HPUX-PA8000-MPICH #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive
+
+######################################################
+# HP-UX 10.20
+# adapted for ATLAS BLAS library
+######################################################
+#HPUX 
+#HPUX # flag for architecture:
+#HPUX ARCH=hpux
+#HPUX 
+#HPUX # code conversion call:
+#HPUX CONVERT=2hp.pl $<
+#HPUX 
+#HPUX LIBDIR=
+#HPUX F77=f90
+#HPUX F90=f90
+#HPUX LD=f90
+#HPUX FLAGS2=
+#HPUX LFLAGS=  -llapack -lblas
+#HPUX LFLAGS=  -llapack -llapack -lf77blas -latlas -lcblas
+#HPUX LFLAGS=  -llapack -lf77blas -latlas -lcblas   \
+#HPUX -L/opt/gcc/lib -lstdc++ -L/opt/gcc/lib/gcc-lib/hppa1.1-hp-hpux10.20/3.0.1 -lgcc -lm -ldld
+#HPUX # Flags for optimization:
+#HPUX #
+#HPUX OPT=+O3 +Ovectorize +Onolimit +Ofastaccess +Oloop_unroll \
+#HPUX +Oprocelim +Oinfo +DC7200 +Oaggressive +Olibcalls +Odataprefetch \
+#HPUX +Oentrysched +Oregionsched +Onoinline
+#HPUX FFLAGS= -K $(OPT) +U77 +FPD -Wl,-O,+n
+#HPUX DFLAGS= -K -c +U77 +FPD -Wl,-a,archive,-O,+n
+#HPUX CFLAGS=-Ae -O -DGOODF90 -DSUN -D_LARGEFILE_SOURCE=0 -O 
+#HPUX 
+#HPUX #
+#HPUX # Flags for debugging::
+#HPUX #
+#HPUX #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive,+n
+#HPUX 
+#HPUX #
+#HPUX # Flags for QD package:
+#HPUX #
+#HPUX CC_OPTS= 
+#HPUX C_QD_OPTS= 
+#HPUX CC=g++
+#HPUX CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#HPUX AR=ar
+#HPUX AR_FLAGS=-crv
+
+######################################################
+# HP-UX 10.20, PA 72000, Convex Exemplar SPP-1200
+######################################################
+#HPUX-MPI 
+#HPUX-MPI # flag for architecture:
+#HPUX-MPI ARCH=hpux-mpi
+#HPUX-MPI 
+#HPUX-MPI # code conversion call:
+#HPUX-MPI CONVERT=2hp-mpi.pl $<
+#HPUX-MPI 
+#HPUX-MPI LIBDIR=
+#HPUX-MPI F77=mpif90
+#HPUX-MPI F90=mpif90
+#HPUX-MPI LD=mpif90
+#HPUX-MPI FLAGS2=
+#HPUX-MPI LFLAGS= -lmpi -Wl,-L,/opt/fortran90/lib -lail -llapack \
+#HPUX-MPI -lblas -lcps -lU77 /lib/libm.a -llapack -lblas
+#HPUX-MPI # Flags for optimization:
+#HPUX-MPI #
+#HPUX-MPI OPT=+O3 +Onolimit +Oloop_unroll \
+#HPUX-MPI +Oprocelim +Oinfo +DC7200 +Olibcalls +Odataprefetch \
+#HPUX-MPI +Oentrysched +Oregionsched +Onoinline
+#HPUX-MPI FFLAGS= -K $(OPT) +U77 +FPD -Wl,-O,+n,-a,archive
+#HPUX-MPI DFLAGS= -K -c +U77 +FPD -Wl,-O,+n,-a,archive
+#HPUX-MPI 
+#HPUX-MPI #
+#HPUX-MPI # Flags for debugging::
+#HPUX-MPI #
+#HPUX-MPI #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive,+n,-O
+
+######################################################
+# HP-UX 10.20
+######################################################
+#HPUX-MPICH 
+#HPUX-MPICH # flag for architecture:
+#HPUX-MPICH ARCH=hpux-mpi
+#HPUX-MPICH 
+#HPUX-MPICH # code conversion call:
+#HPUX-MPICH CONVERT=2hp-mpi.pl $<
+#HPUX-MPICH 
+#HPUX-MPICH LIBDIR=
+#HPUX-MPICH F77=mpif77
+#HPUX-MPICH F90=mpif77
+#HPUX-MPICH LD=mpif77
+#HPUX-MPICH FLAGS2=
+#HPUX-MPICH LFLAGS=  -llapack -lblas
+#HPUX-MPICH # Flags for optimization:
+#HPUX-MPICH #
+#HPUX-MPICH OPT=+O3 +Ovectorize +Onolimit +Ofastaccess +Oloop_unroll \
+#HPUX-MPICH +Oprocelim +Oinfo +DC7200 +Oaggressive +Olibcalls +Odataprefetch \
+#HPUX-MPICH +Oentrysched +Oregionsched +Onoinline
+#HPUX-MPICH FFLAGS= -K $(OPT) +U77 +FPD -Wl,-O,+n
+#HPUX-MPICH DFLAGS= -K -c +U77 +FPD -Wl,-O,+n
+#HPUX-MPICH 
+#HPUX-MPICH #
+#HPUX-MPICH # Flags for debugging::
+#HPUX-MPICH #
+#HPUX-MPICH #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive
+
+
+######################################################
+# HP-UX 10.01
+######################################################
+#HPUX-10.01 
+#HPUX-10.01 # flag for architecture:
+#HPUX-10.01 ARCH=hpux
+#HPUX-10.01 
+#HPUX-10.01 # code conversion call:
+#HPUX-10.01 CONVERT=2hp.pl $<
+#HPUX-10.01 
+#HPUX-10.01 LIBDIR=
+#HPUX-10.01 F77=f77
+#HPUX-10.01 F90=f77
+#HPUX-10.01 LD=f77
+#HPUX-10.01 FLAGS2=
+#HPUX-10.01 LFLAGS=  -llapack -lblas -lvec
+#HPUX-10.01 # Flags for optimization:
+#HPUX-10.01 #
+#HPUX-10.01 OPT=+O3 +Ovectorize +Onolimit +Ofastaccess \
+#HPUX-10.01 +Olibcalls +Oprocelim +Oinfo
+#HPUX-10.01 FFLAGS= -K $(OPT) +U77 +FPD -Wl,-a,archive,+n
+#HPUX-10.01 DFLAGS= -K -c +U77 +FPD -Wl,-a,archive,+n
+#HPUX-10.01 
+#HPUX-10.01 #
+#HPUX-10.01 # Flags for debugging::
+#HPUX-10.01 #
+#HPUX-10.01 #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive,+n
+#HPUX-10.01 
+
+
+######################################################
+# HP-UX 10.x with MPICH
+######################################################
+#HPUX-10.01-MPICH 
+#HPUX-10.01-MPICH # flag for architecture:
+#HPUX-10.01-MPICH ARCH=hpux-mpi
+#HPUX-10.01-MPICH 
+#HPUX-10.01-MPICH # code conversion call:
+#HPUX-10.01-MPICH CONVERT=2hp-mpi.pl $<
+#HPUX-10.01-MPICH 
+#HPUX-10.01-MPICH LIBDIR=
+#HPUX-10.01-MPICH F77=mpif77
+#HPUX-10.01-MPICH F90=mpif77
+#HPUX-10.01-MPICH LD=mpif77
+#HPUX-10.01-MPICH FLAGS2=
+#HPUX-10.01-MPICH LFLAGS=  -llapack -lblas -lvec
+#HPUX-10.01-MPICH # Flags for optimization:
+#HPUX-10.01-MPICH #
+#HPUX-10.01-MPICH OPT=+O3 +Ovectorize +Onolimit +Ofastaccess \
+#HPUX-10.01-MPICH +Olibcalls +Oprocelim +Oinfo
+#HPUX-10.01-MPICH FFLAGS= -K $(OPT) +U77 +FPD -Wl,-a,archive,+n
+#HPUX-10.01-MPICH DFLAGS= -K -c +U77 +FPD -Wl,-a,archive,+n
+#HPUX-10.01-MPICH 
+#HPUX-10.01-MPICH #
+#HPUX-10.01-MPICH # Flags for debugging::
+#HPUX-10.01-MPICH #
+#HPUX-10.01-MPICH #FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive,+n
+
+######################################################
+# HP-UX 9.x
+######################################################
+#HPUX-9.x 
+#HPUX-9.x # flag for architecture:
+#HPUX-9.x ARCH=hpux
+#HPUX-9.x 
+#HPUX-9.x # code conversion call:
+#HPUX-9.x CONVERT=2hp.pl $<
+#HPUX-9.x 
+#HPUX-9.x LIBDIR=
+#HPUX-9.x F77=f77
+#HPUX-9.x F90=f77
+#HPUX-9.x LD=f77
+#HPUX-9.x FLAGS2= 
+#HPUX-9.x LFLAGS= -Wl,-L,/hp3/usr2/phauschi/lib/ -llapack -lblas -lvec
+#HPUX-9.x # Flags for optimization:
+#HPUX-9.x #
+#HPUX-9.x FFLAGS= -K +OP2 +O2 +U77 +FPD -Wl,-a,archive,+n -WP,-ro=0
+#HPUX-9.x DFLAGS= -K -c +U77 -v -V +FPD -Wl,-a,archive,+n
+#HPUX-9.x #save FFLAGS= -K +O2 +U77 +FPD -Wl,-a,archive,+n
+#HPUX-9.x FFLAGS= -K +OP2P +O2 +U77 +FPD -Wl,-a,archive,+n -WP,-ro=0
+#HPUX-9.x 
+#HPUX-9.x #
+#HPUX-9.x # Flags for debugging::
+#HPUX-9.x #
+#HPUX-9.x FFLAGS= +FPzD +T -C +E1 -g -K +U77 -Wl,-a,archive,+n
+
+######################################################
+# SGI F90, version 6:
+######################################################
+
+#SGI # flag for architecture:
+#SGI ARCH=sgi
+#SGI 
+#SGI # code conversion call:
+#SGI CONVERT=2sgi.pl $<
+#SGI 
+#SGI LIBDIR=
+#SGI F77=f90
+#SGI F90=f90
+#SGI LD=f90
+#SGI FLAGS2=
+#SGI #LFLAGS= -Wl,-gpinfo,-L/tick/people/yeti/lib/ -lfastm -lcomplib.sgimath
+#SGI LFLAGS= -lfastm -lcomplib.sgimath \
+#SGI  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o MISC/blockdata.o FPPRESS/blockdata.o
+#SGI # Flags for optimization:
+#SGI #
+#SGI #PPFLAGS=-pfa -WK,-processors=1 -WK,-so=3,-ro=3,-o=5,-hoist_loop_invariants=3
+#SGI 
+#SGI DFLAGS= -r8 -G 0 -static -O0 -n32 -mips4 -TARG:processor=r8000:madd=on
+#SGI FFLAGS= -r8 -G 0 -static -O3 -n32 -mips4 -TARG:processor=r8000:madd=on \
+#SGI -OPT:IEEE_arithmetic=3:roundoff=0:IEEE_comparison=ON -TENV:X=4 \
+#SGI -OPT:fast_complex=ON:fast_exp=ON:fast_sqrt=OFF \
+#SGI -LNO:pf3=ON:pf4=ON:prefetch=2 $(PPFLAGS)
+#SGI 
+
+######################################################
+# SGI F90 with MPI on O2000, version 7.2 compiler:
+######################################################
+
+#SGI-MPI # flag for architecture:
+#SGI-MPI ARCH=sgi-mpi
+#SGI-MPI
+#SGI-MPI # code conversion call:
+#SGI-MPI CONVERT=2sgi-mpi.pl $<
+#SGI-MPI
+#SGI-MPI LIBDIR=
+#SGI-MPI F77=f90
+#SGI-MPI F90=f90
+#SGI-MPI LD=f90
+#SGI-MPI FLAGS2=
+#SGI-MPI #LFLAGS= -Wl,-gpinfo,-L/tick/people/yeti/lib/ -lfastm -lcomplib.sgimath
+#SGI-MPI LFLAGS= -multigot -lfastm -lcomplib.sgimath -lmpi \
+#SGI-MPI -lstdc++ -lsupc++ -lgcc
+#SGI-MPI # WARNING! c++ libs. for gcc must be in the /usr/lib32 directory
+#SGI-MPI #  ELSE use the correct -L path.
+#SGI-MPI # Flags for optimization:
+#SGI-MPI #
+#SGI-MPI #PPFLAGS=-pfa -WK,-processors=1 -WK,-so=3,-ro=3,-o=5,-hoist_loop_invariants=3
+#SGI-MPI
+#SGI-MPI DFLAGS= -r8 -static -O0 -n32 -mips4 -r12000 -TARG:madd=on
+#SGI-MPI FFLAGS= -r8 -static -O3 -n32 -mips4 -r12000 -TARG:madd=on \
+#SGI-MPI -OPT:IEEE_arithmetic=3:roundoff=3:IEEE_comparison=ON -TENV:X=4 \
+#SGI-MPI -OPT:fast_complex=ON:fast_exp=ON:fast_sqrt=OFF:div_split=ON \
+#SGI-MPI -OPT:recip=ON:swp=ON -LNO:pf3=ON:pf4=ON:prefetch=2 $(PPFLAGS)
+#SGI-MPI CFLAGS=-DSUN -O -n32
+#SGI-MPI
+#SGI-MPI CC=gcc
+#SGI-MPI CC_FLAGS= -O3
+#SGI-MPI
+#SGI-MPI RANLIB=echo
+
+###########################################################
+# SGI F90 with MPI on O2000, version 7.2 compiler, 64bit
+###########################################################
+
+#SGI-MPI-64 # flag for architecture:
+#SGI-MPI-64 ARCH=sgi-mpi
+#SGI-MPI-64 
+#SGI-MPI-64 # code conversion call:
+#SGI-MPI-64 CONVERT=2sgi-mpi.pl $<
+#SGI-MPI-64 
+#SGI-MPI-64 LIBDIR=
+#SGI-MPI-64 F77=f90
+#SGI-MPI-64 F90=f90
+#SGI-MPI-64 LD=f90
+#SGI-MPI-64 FLAGS2=
+#SGI-MPI-64 #LFLAGS= -Wl,-gpinfo,-L/tick/people/yeti/lib/ -lfastm -lcomplib.sgimath
+#SGI-MPI-64 LFLAGS= -multigot -lfastm -lcomplib.sgimath -lmpi \
+#SGI-MPI-64  -L/usr/freeware/lib/gcc-lib/mips-sgi-irix6.5/3.0.4/mabi=64 \
+#SGI-MPI-64  -lstdc++ -lsupc++ -lgcc
+#SGI-MPI-64 # Flags for optimization:
+#SGI-MPI-64 #
+#SGI-MPI-64 #PPFLAGS=-pfa -WK,-processors=1 -WK,-so=3,-ro=3,-o=5,-hoist_loop_invariants=3
+#SGI-MPI-64 
+#SGI-MPI-64 DFLAGS= -r8 -static -O0 -64 -mips4  -TARG:madd=on
+#SGI-MPI-64 FFLAGS= -r8 -static -O3 -64 -mips4  -TARG:madd=on \
+#SGI-MPI-64 -OPT:IEEE_arithmetic=3:roundoff=3:IEEE_comparison=ON -TENV:X=4 \
+#SGI-MPI-64 -OPT:fast_complex=ON:fast_exp=ON:fast_sqrt=OFF:div_split=ON \
+#SGI-MPI-64 -OPT:recip=ON:swp=ON -LNO:pf3=ON:pf4=ON:prefetch=2 $(PPFLAGS)
+#SGI-MPI-64 CFLAGS=-DSUN -O -64
+#SGI-MPI-64 
+#SGI-MPI-64 
+#SGI-MPI-64 CC=gcc
+#SGI-MPI-64 CC_FLAGS= -O3 -mabi=64
+#SGI-MPI-64 
+#SGI-MPI-64 RANLIB=echo
+
+
+######################################################
+# SGI F90 with MPI on O2000 version 6 compiler
+######################################################
+
+#SGI-MPI-V6 # flag for architecture:
+#SGI-MPI-V6 ARCH=sgi-mpi
+#SGI-MPI-V6 
+#SGI-MPI-V6 # code conversion call:
+#SGI-MPI-V6 CONVERT=2sgi-mpi.pl $<
+#SGI-MPI-V6 
+#SGI-MPI-V6 LIBDIR=
+#SGI-MPI-V6 F77=f90
+#SGI-MPI-V6 F90=f90
+#SGI-MPI-V6 LD=f90
+#SGI-MPI-V6 FLAGS2=
+#SGI-MPI-V6 #LFLAGS= -Wl,-gpinfo,-L/tick/people/yeti/lib/ -lfastm -lcomplib.sgimath
+#SGI-MPI-V6 LFLAGS= -lfastm -lcomplib.sgimath -lmpi \
+#SGI-MPI-V6  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o MISC/blockdata.o FPPRESS/blockdata.o
+#SGI-MPI-V6 # Flags for optimization:
+#SGI-MPI-V6 #
+#SGI-MPI-V6 #PPFLAGS=-pfa -WK,-processors=1 -WK,-so=3,-ro=3,-o=5,-hoist_loop_invariants=3
+#SGI-MPI-V6 
+#SGI-MPI-V6 DFLAGS= -v6 -G 0 -static -O0 -64 -mips4 -TARG:processor=r10000:madd=on
+#SGI-MPI-V6 FFLAGS= -v6 -G 0 -static -O3 -64 -mips4 -TARG:processor=r10000:madd=on \
+#SGI-MPI-V6 -OPT:IEEE_arithmetic=3:roundoff=0:IEEE_comparison=ON -TENV:X=4 \
+#SGI-MPI-V6 -OPT:fast_complex=ON:fast_exp=ON:fast_sqrt=OFF:vector_intrinsics=on \
+#SGI-MPI-V6 -GCM:aggressive_speculation=on:static_load_speculation=ON:array_speculation=on \
+#SGI-MPI-V6 -SWP:strict_ivdep=false:max_pair_candidates=2 $(PPFLAGS)
+#SGI-MPI-V6 
+
+######################################################
+# SGI F90 with MPICH
+######################################################
+
+#SGI-MPICH # flag for architecture:
+#SGI-MPICH ARCH=sgi-mpi
+#SGI-MPICH 
+#SGI-MPICH # code conversion call:
+#SGI-MPICH CONVERT=2sgi-mpi.pl $<
+#SGI-MPICH 
+#SGI-MPICH LIBDIR=
+#SGI-MPICH F77=mpif77
+#SGI-MPICH F90=mpif77
+#SGI-MPICH LD=mpif77
+#SGI-MPICH FLAGS2=
+#SGI-MPICH #LFLAGS= -Wl,-gpinfo,-L/tick/people/yeti/lib/ -lfastm -lcomplib.sgimath
+#SGI-MPICH LFLAGS= -lcomplib.sgimath \
+#SGI-MPICH  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o MISC/blockdata.o FPPRESS/blockdata.o
+#SGI-MPICH # Flags for optimization:
+#SGI-MPICH #
+#SGI-MPICH #PPFLAGS=-pfa -WK,-processors=1 -WK,-so=3,-ro=3,-o=5,-hoist_loop_invariants=3
+#SGI-MPICH 
+#SGI-MPICH DFLAGS= -G 0 -static -O0 -64 -mips4 -TARG:processor=r8000:madd=on
+#SGI-MPICH FFLAGS= -G 0 -static -O3 -64 -mips4 -TARG:processor=r8000:madd=on \
+#SGI-MPICH -OPT:IEEE_arithmetic=3:roundoff=0:IEEE_comparison=ON -TENV:X=4 \
+#SGI-MPICH -OPT:fast_complex=ON:fast_exp=ON:fast_sqrt=OFF:vector_intrinsics=on \
+#SGI-MPICH -GCM:aggressive_speculation=on:static_load_speculation=ON:array_speculation=on \
+#SGI-MPICH -SWP:strict_ivdep=false:max_pair_candidates=2 $(PPFLAGS)
+#SGI-MPICH 
+
+######################################################
+# SGI F77
+######################################################
+#SGI-F77
+#SGI-F77 # flag for architecture:
+#SGI-F77 ARCH=sgi
+#SGI-F77
+#SGI-F77 # code conversion call:
+#SGI-F77 CONVERT=2sgi.pl $<
+#SGI-F77
+#SGI-F77 LIBDIR=
+#SGI-F77 F77=f77
+#SGI-F77 F90=f77
+#SGI-F77 LD=f77
+#SGI-F77 FLAGS2=
+#SGI-F77 LFLAGS= -lcomplib.sgimath -lblas \
+#SGI-F77   LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o MISC/blockdata.o FPPRESS/blockdata.o
+#SGI-F77 # Flags for optimization:
+#SGI-F77 #
+#SGI-F77 FFLAGS= -mips2 -O2 -sopt  -static -Olimit 10000
+#SGI-F77 DFLAGS= -mips2 -static -c
+
+######################################################
+# OSF/1 (DEC Alpha) DEC Fortran 77
+######################################################
+#DEC-F77
+#DEC-F77 # flag for architecture:
+#DEC-F77 ARCH=linux
+#DEC-F77
+#DEC-F77 #
+#DEC-F77 # General Flags:
+#DEC-F77 #
+#DEC-F77 LIBDIR=/usr/users/yeti/LIBS
+#DEC-F77 LFLAGS= $(LIBDIR)/lapack.a $(LIBDIR)/blas.a
+#DEC-F77 FLAGS2=
+#DEC-F77
+#DEC-F77 #
+#DEC-F77 # Flags for optimization:
+#DEC-F77 #
+#DEC-F77 FFLAGS= -noautomatic -O4 -g0 -assume noaccuracy_sensitive -convert big_endian
+#DEC-F77 DFLAGS=-noautomatic -O0 -g0 -assume noaccuracy_sensitive -c -convert big_endian
+#DEC-F77 #
+#DEC-F77 # Flags for debugging::
+#DEC-F77 #
+#DEC-F77 #FFLAGS= -noautomatic -C -O0 -g  -convert big_endian
+#DEC-F77
+#DEC-F77 F77=f77
+#DEC-F77 F90=f77
+#DEC-F77 LD=f77
+
+######################################################
+# OSF/1 (DEC Alpha) DEC/Compaq Fortran 90
+######################################################
+# update for phx13xxxx (jpa, 12/dec/02)
+#
+# Required: Compaq Fortran V5.5-2602
+#           Compaq Fortran Compiler X5.5-2602-48C8L
+# Previous compiler versions (like 5.3) are buggy and 
+# crash on standard "use" statements
+#
+# QD requires g++ (GCC 3.1 or later)
+# 
+# GCC 3.2 compiles on windy with these configure options:
+#  --enable-shared --enable-threads --enable-languages=c,c++
+#
+# Working (I hope!) version for 
+# OSF1 windy.harvard.edu V4.0 1530 alpha
+# with CIO line list I/O which doesn't
+# require the environment vars below
+# (jpa, 19/oct/00)
+# 
+######################################################
+# note: include the following environment vars in your
+# .profile if you are using standard Big Endian binary
+# input files:
+# export FORT_CONVERT1=big_endian
+# export FORT_CONVERT2=big_endian
+# export FORT_CONVERT10=big_endian
+# export FORT_CONVERT30=big_endian
+# or include the -convert big_endian compiler option.
+#DEC-F90 
+#DEC-F90 # flag for architecture:
+#DEC-F90 ARCH=axp
+#DEC-F90 
+#DEC-F90 # code conversion call:
+#DEC-F90 CONVERT=2axp.pl $<
+#DEC-F90 
+#DEC-F90 #
+#DEC-F90 # General Flags:
+#DEC-F90 #
+#DEC-F90#ORIG# LIBDIR=/usr/users/yeti/LIBS
+#DEC-F90#ORIG# LFLAGS= $(LIBDIR)/lapack.a $(LIBDIR)/blas.a
+#DEC-F90#ORIG# LFLAGS= -ldxml
+#DEC-F90 #
+#DEC-F90 # working flags for windy
+#DEC-F90 #
+#DEC-F90  LIBDIR=/usr/users/yeti/LIBS
+#DEC-F90#
+#DEC-F90# hard-coded library directories for g++ on windy (jpa, 12/dec/02)
+#DEC-F90#
+#DEC-F90  GCCLIBDIR1=/data/jaufdenb1/GCC_3.2/gcc/lib/gcc-lib/alpha-dec-osf4.0g/3.2
+#DEC-F90  GCCLIBDIR2=/data/jaufdenb1/GCC_3.2/gcc/lib
+#DEC-F90  LFLAGS= $(LIBDIR)/lapack.a $(LIBDIR)/blas.a
+#DEC-F90  LFLAGS= -ldxml \
+#DEC-F90     $(GCCLIBDIR2)/libstdc++.a  \
+#DEC-F90     $(GCCLIBDIR1)/libgcc_eh.a $(GCCLIBDIR2)/libsupc++.a 
+#DEC-F90  LFLAGSU= -ldxml cio.o\
+#DEC-F90    ../../LTELINES/kuruczid.o ../../LTELINES/molx.o ../../LTELINES/isotp.o \
+#DEC-F90    ../../MISC/blockdata.o ../../FPPRESS/blockdata.o 
+#DEC-F90#ORIG#
+#DEC-F90#ORIG# FFLAGS= -static -O5 -g0 -assume noaccuracy_sensitive \
+#DEC-F90#ORIG#  -fixed -fpe1 -tune host
+#DEC-F90#ORIG# DFLAGS=-static -O0 -g0 -assume noaccuracy_sensitive  \
+#DEC-F90#ORIG#  -fixed -fpe1 -tune host
+#DEC-F90 #
+#DEC-F90 # working flags for windy
+#DEC-F90 #
+#DEC-F90 FFLAGS= -static -O5 -g0 -assume noaccuracy_sensitive \
+#DEC-F90  -fixed -fpe1 -tune host -arch host -fast -assume byterecl
+#DEC-F90 DFLAGS=-static -O0 -g0 -assume noaccuracy_sensitive  \
+#DEC-F90  -fixed -fpe1 -tune host
+#DEC-F90 #
+#DEC-F90 # Flags for debugging:
+#DEC-F90 #
+#DEC-F90 #FFLAGS= -noautomatic -C -O0 -g
+#DEC-F90 #
+#DEC-F90 # Flags for cc compiler for cio.c on windy
+#DEC-F90 #
+#DEC-F90 # new flag, DEC90, needed on windy (see cio.c)
+#DEC-F90 #
+#DEC-F90 # QD needs gcc 3.1.1 for alpha
+#DEC-F90 CC=/data/jaufdenb1/GCC_3.2/gcc/bin/g++
+#DEC-F90 CFLAGS=-std -O -DO_LARGEFILE=0 -DLITTLE_ENDIAN -DSUN -DDEC90 -DGOODF90
+#DEC-F90 
+#DEC-F90 F77=f90
+#DEC-F90 F90=f90
+#DEC-F90 LD=f90
+
+
+######################################################
+# Linux
+######################################################
+
+#LINUX-F2C # flag for architecture:
+#LINUX-F2C ARCH=linux
+#LINUX-F2C
+#LINUX-F2C # code conversion call:
+#LINUX-F2C CONVERT=2linux.pl $<
+#LINUX-F2C
+#LINUX-F2C #
+#LINUX-F2C # General Flags:
+#LINUX-F2C #
+#LINUX-F2C LFLAGS=  etime.o -llapack -lblas
+#LINUX-F2C FLAGS2=
+#LINUX-F2C
+#LINUX-F2C #
+#LINUX-F2C # Flags for optimization:
+#LINUX-F2C #
+#LINUX-F2C FFLAGS= -O2 -Nn10000 -Nx10000 -g
+#LINUX-F2C DFLAGS=$(FFLAGS) -c
+#LINUX-F2C #
+#LINUX-F2C # Flags for debugging::
+#LINUX-F2C #
+#LINUX-F2C #FFLAGS= -Nn10000 -Nx10000 -g
+#LINUX-F2C
+#LINUX-F2C F77=f77
+#LINUX-F2C F90=f77
+#LINUX-F2C LD=f77
+
+######################################################
+# PGI F90/HPF (Linux)
+######################################################
+
+#PGI-F90 # flag for architecture:
+#PGI-F90 ARCH=pgi
+#PGI-F90 
+#PGI-F90 # code conversion call
+#PGI-F90 CONVERT=2pgi.pl $<
+#PGI-F90 
+#PGI-F90 #
+#PGI-F90 # General Flags:
+#PGI-F90 # (may need to adapt library names for Lapack and blas)
+#PGI-F90 #
+#PGI-F90 LFLAGS= 
+#PGI-F90   
+#PGI-F90 FLAGS2=
+#PGI-F90 CFLAGS=-DPGF90 -DLITTLE_ENDIAN -DGOODF90  -DSUN -O -DO_LARGEFILE=0
+#PGI-F90 
+#PGI-F90 #
+#PGI-F90 # Flags for optimization:
+#PGI-F90 # 
+#PGI-F90 FFLAGS= -Msave -Wh,-save -fast -Mvect -Knoieee -Minfo=all -Mneginfo=loop
+#PGI-F90 DFLAGS= -c -O0 -Msave -Wh,-save -Minfo=all -Mneginfo=loop
+#PGI-F90 #
+#PGI-F90 # Flags for debugging::
+#PGI-F90 #
+#PGI-F90 #FFLAGS= -g -Msave -Wh,-save -Knoieee -Ktrap=fp -Wl,-noinhibit-exec
+#PGI-F90 #DFLAGS= -c -g -Msave -Wh,-save -Knoieee -Ktrap=fp -Wl,-noinhibit-exec
+#PGI-F90 #
+#PGI-F90 BENCHFLAGS= $(FFLAGS)
+#PGI-F90 
+#PGI-F90 F77=pgf90
+#PGI-F90 F90=pgf90
+#PGI-F90 LD=pgf90
+#PGI-F90 
+#PGI-F90 #
+#PGI-F90 # Flags for QD package:
+#PGI-F90 #
+#PGI-F90 CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#PGI-F90 C_QD_OPTS= 
+#PGI-F90 CC=g++
+#PGI-F90 CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#PGI-F90 AR=ar
+#PGI-F90 AR_FLAGS=-crv
+
+######################################################
+# PGI F90/HPF (Linux) MPICH
+######################################################
+
+#PGI-F90-MPI # flag for architecture:
+#PGI-F90-MPI ARCH=pgi-mpi
+#PGI-F90-MPI 
+#PGI-F90-MPI # code conversion call
+#PGI-F90-MPI CONVERT=2pgi-mpi.pl $<
+#PGI-F90-MPI 
+#PGI-F90-MPI #
+#PGI-F90-MPI # General Flags:
+#PGI-F90-MPI # (may need to adapt library names for Lapack and blas)
+#PGI-F90-MPI #
+#PGI-F90-MPI LFLAGS= -llapack_pgi -lblas_pgi
+#PGI-F90-MPI   
+#PGI-F90-MPI FLAGS2=
+#PGI-F90-MPI CFLAGS=-DPGF90 -DLITTLE_ENDIAN -DGOODF90  -DSUN -O -DO_LARGEFILE=0
+#PGI-F90-MPI 
+#PGI-F90-MPI #
+#PGI-F90-MPI # Flags for optimization:
+#PGI-F90-MPI # 
+#PGI-F90-MPI FFLAGS= -Msave -Wh,-save -fast -Mvect -Knoieee -Minfo=all -Mneginfo=loop
+#PGI-F90-MPI DFLAGS= -c -O0 -Msave -Wh,-save -Minfo=all -Mneginfo=loop
+#PGI-F90-MPI #
+#PGI-F90-MPI # Flags for debugging::
+#PGI-F90-MPI #
+#PGI-F90-MPI #FFLAGS= -g -Msave -Wh,-save -Knoieee -Ktrap=fp -Wl,-noinhibit-exec
+#PGI-F90-MPI #DFLAGS= -c -g -Msave -Wh,-save -Knoieee -Ktrap=fp -Wl,-noinhibit-exec
+#PGI-F90-MPI #
+#PGI-F90-MPI BENCHFLAGS= $(FFLAGS)
+#PGI-F90-MPI 
+#PGI-F90-MPI F77=mpif90
+#PGI-F90-MPI F90=mpif90
+#PGI-F90-MPI LD=mpif90
+#PGI-F90-MPI 
+
+######################################################
+# PGI F90/HPF (Solaris IA-32)
+######################################################
+
+#PGI-F90-SOLARIS # flag for architecture:
+#PGI-F90-SOLARIS ARCH=pgi
+#PGI-F90-SOLARIS 
+#PGI-F90-SOLARIS # code conversion call
+#PGI-F90-SOLARIS CONVERT=2pgi.pl $<
+#PGI-F90-SOLARIS 
+#PGI-F90-SOLARIS #
+#PGI-F90-SOLARIS # General Flags:
+#PGI-F90-SOLARIS # (may need to adapt library names for Lapack and blas)
+#PGI-F90-SOLARIS #
+#PGI-F90-SOLARIS LFLAGS= -Wl,-z,nodefs -llapack_pgi -lblas_pgi
+#PGI-F90-SOLARIS FLAGS2=
+#PGI-F90-SOLARIS CFLAGS=-Dfseeko=fseek -DPGF90 -DLITTLE_ENDIAN -DGOODF90  -DSUN -O -DO_LARGEFILE=0
+#PGI-F90-SOLARIS 
+#PGI-F90-SOLARIS #
+#PGI-F90-SOLARIS # Flags for optimization:
+#PGI-F90-SOLARIS # 
+#PGI-F90-SOLARIS FFLAGS= -Msave -Wh,-save -fast -Mvect -Knoieee -Minfo=all -Mneginfo=loop
+#PGI-F90-SOLARIS DFLAGS= -c -O0 -Msave -Wh,-save -Minfo=all -Mneginfo=loop
+#PGI-F90-SOLARIS #
+#PGI-F90-SOLARIS # Flags for debugging::
+#PGI-F90-SOLARIS #
+#PGI-F90-SOLARIS #FFLAGS= -fast -Msave -Wh,-save -Knoieee
+#PGI-F90-SOLARIS #DFLAGS= -c -fast -Msave -Wh,-save -Knoieee
+#PGI-F90-SOLARIS 
+#PGI-F90-SOLARIS F77=pgf90
+#PGI-F90-SOLARIS F90=pgf90
+#PGI-F90-SOLARIS LD=pgf90
+#PGI-F90-SOLARIS CC=gcc
+#PGI-F90-SOLARIS 
+
+######################################################
+# PGI F90/HPF (Solaris IA-32), MPICH
+######################################################
+
+#PGI-F90-SOLARIS-MPI # flag for architecture:
+#PGI-F90-SOLARIS-MPI ARCH=pgi-mpi
+#PGI-F90-SOLARIS-MPI 
+#PGI-F90-SOLARIS-MPI # code conversion call
+#PGI-F90-SOLARIS-MPI CONVERT=2pgi-mpi.pl $<
+#PGI-F90-SOLARIS-MPI 
+#PGI-F90-SOLARIS-MPI #
+#PGI-F90-SOLARIS-MPI # General Flags:
+#PGI-F90-SOLARIS-MPI # (may need to adapt library names for Lapack and blas)
+#PGI-F90-SOLARIS-MPI #
+#PGI-F90-SOLARIS-MPI LFLAGS= -Wl,-z,nodefs -llapack_pgi -lblas_pgi
+#PGI-F90-SOLARIS-MPI FLAGS2=
+#PGI-F90-SOLARIS-MPI CFLAGS=-Dfseeko=fseek -DPGF90 -DLITTLE_ENDIAN -DGOODF90  -DSUN -O -DO_LARGEFILE=0
+#PGI-F90-SOLARIS-MPI 
+#PGI-F90-SOLARIS-MPI #
+#PGI-F90-SOLARIS-MPI # Flags for optimization:
+#PGI-F90-SOLARIS-MPI # 
+#PGI-F90-SOLARIS-MPI FFLAGS= -Msave -Wh,-save -fast -Mvect -Knoieee -Minfo=all -Mneginfo=loop
+#PGI-F90-SOLARIS-MPI DFLAGS= -c -O0 -Msave -Wh,-save -Minfo=all -Mneginfo=loop
+#PGI-F90-SOLARIS-MPI #
+#PGI-F90-SOLARIS-MPI # Flags for debugging::
+#PGI-F90-SOLARIS-MPI #
+#PGI-F90-SOLARIS-MPI #FFLAGS= -fast -Msave -Wh,-save -Knoieee
+#PGI-F90-SOLARIS-MPI #DFLAGS= -c -fast -Msave -Wh,-save -Knoieee
+#PGI-F90-SOLARIS-MPI 
+#PGI-F90-SOLARIS-MPI F77=mpif90
+#PGI-F90-SOLARIS-MPI F90=mpif90
+#PGI-F90-SOLARIS-MPI LD=mpif90
+#PGI-F90-SOLARIS-MPI CC=gcc
+#PGI-F90-SOLARIS-MPI 
+
+
+######################################################
+# Linux/NAG F90
+######################################################
+
+#LINUX # flag for architecture:
+#LINUX ARCH=nag
+#LINUX 
+#LINUX # code conversion call
+#LINUX CONVERT=2linux.pl $<
+#LINUX 
+#LINUX #
+#LINUX # General Flags:
+#LINUX #
+#LINUX # remove the "-L /usr/i386-glibc20-linux/lib" on pre-RH6.0 systems
+#LINUX LFLAGS= -L/usr/i386-glibc20-linux/lib \
+#LINUX   -llapack -lblas
+#LINUX FLAGS2=
+#LINUX 
+#LINUX #
+#LINUX # Flags for optimization:
+#LINUX # 
+#LINUX # these GCC options are for pgcc on a pentium-pro or PII. 
+#LINUX # remove '-march=pentiumpro' for non-P6 or non-PII machines.
+#LINUX # use '-mpentium' on a P5, '-m6k' or '-mamd6k' on AMD K6's
+#LINUX # set to GCCARG='-O6 -fno-omit-frame-pointer' on non-PGCC compilers.
+#LINUX # 
+#LINUX #GCCARG='-march=pentiumpro -O6 -mpentiumpro -fno-omit-frame-pointer -funroll-all-loops -fno-compare-elim'
+#LINUX GCCARG='-march=pentiumpro -O6 -mpentiumpro -fno-omit-frame-pointer -funroll-all-loops -fno-inline-functions -ffast-math'
+#LINUX GCCARG='-march=pentiumpro -O6 -mpentiumpro -fno-omit-frame-pointer -funroll-all-loops -fno-inline-functions'
+#LINUX #
+#LINUX FFLAGS= -time -O -save -ccarg $(GCCARG)  -Nl999 -byte_kinds
+#LINUX DFLAGS= -c -time -save -Nl999 -byte_kinds
+#LINUX BENCHFLAGS=$(FFLAGS)
+#LINUX #
+#LINUX # Flags for debugging::
+#LINUX #
+#LINUX #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -Wl,-noinhibit-exec
+#LINUX #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -c -Wl,-noinhibit-exec
+#LINUX 
+#LINUX F77=f90 
+#LINUX F90=f90 
+#LINUX LD=f90 
+#LINUX 
+
+######################################################
+# Linux/NAG F95
+######################################################
+
+#LINUX-f95 # flag for architecture:
+#LINUX-f95 ARCH=nag
+#LINUX-f95 
+#LINUX-f95 # code conversion call
+#LINUX-f95 CONVERT=2linux.pl $<
+
+#LINUX-f95 
+#LINUX-f95 #
+#LINUX-f95 # General Flags:
+#LINUX-f95 #
+#LINUX-f95 LFLAGS=  -unsharedf95 LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#LINUX-f95   MISC/blockdata.o FPPRESS/blockdata.o etime.o -llapack -lblas
+#LINUX-f95 FLAGS2=
+#LINUX-f95 
+#LINUX-f95 #
+#LINUX-f95 # Flags for optimization:
+#LINUX-f95 # 
+#LINUX-f95 # these GCC options are for pgcc on a pentium-pro or PII. 
+#LINUX-f95 # remove '-march=pentiumpro' for non-P6 or non-PII machines.
+#LINUX-f95 # use '-mpentium' on a P5, '-m6k' or '-mamd6k' on AMD K6's
+#LINUX-f95 # set to GCCARG='-Wc,-O6,-fno-omit-frame-pointer' on non-PGCC compilers.
+#LINUX-f95 # 
+#LINUX-f95 GCCARG=-Wc,-march=pentiumpro,-O6,-mpentiumpro,-fno-omit-frame-pointer,-funroll-all-loops,-fno-inline-functions
+#LINUX-f95 #
+#LINUX-f95 FFLAGS= -Ounsafe -ieee=nonstd -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -info
+#LINUX-f95 DFLAGS= -ieee=nonstd -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -info
+#LINUX-f95 #
+#LINUX-f95 # Flags for debugging::
+#LINUX-f95 #
+#LINUX-f95 #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds
+#LINUX-f95 #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -c
+#LINUX-f95 
+#LINUX-f95 F77=f95
+#LINUX-f95 F90=f95
+#LINUX-f95 LD=f95
+#LINUX-f95 
+
+######################################################
+# Linux/NAG F95 with MPICH
+######################################################
+
+#LINUX-MPI-f95 # flag for architecture:
+#LINUX-MPI-f95 ARCH=nag-mpi
+#LINUX-MPI-f95 
+#LINUX-MPI-f95 # code conversion call
+#LINUX-MPI-f95 CONVERT=2linux-mpi.pl $<
+#LINUX-MPI-f95 
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 # General Flags:
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#LINUX-MPI-f95  MISC/blockdata.o FPPRESS/blockdata.o etime.o -llapack -lblas
+#LINUX-MPI-f95 FLAGS2=
+#LINUX-MPI-f95 
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 # Flags for optimization:
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 FFLAGS= -ieee=nonstd -O4 -save -Wc,-O4  -Nl999 -kind=byte -dusty -info
+#LINUX-MPI-f95 DFLAGS= -ieee=nonstd -c -save -Nl999 -kind=byte -dusty -info
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 # Flags for debugging::
+#LINUX-MPI-f95 #
+#LINUX-MPI-f95 #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds
+#LINUX-MPI-f95 #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -c
+#LINUX-MPI-f95 
+#LINUX-MPI-f95 F77=mpif95
+#LINUX-MPI-f95 F90=mpif95
+#LINUX-MPI-f95 LD=mpif95
+#LINUX-MPI-f95 
+
+######################################################
+# Linux/NAG F90 with MPICH
+######################################################
+
+#LINUX-MPI # flag for architecture:
+#LINUX-MPI ARCH=nag-mpi
+#LINUX-MPI 
+#LINUX-MPI # code conversion call
+#LINUX-MPI CONVERT=2linux-mpi.pl $<
+#LINUX-MPI 
+#LINUX-MPI #
+#LINUX-MPI # General Flags:
+#LINUX-MPI #
+#LINUX-MPI LFLAGS= -L/usr/i386-glibc20-linux/lib LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#LINUX-MPI   MISC/blockdata.o FPPRESS/blockdata.o etime.o -llapack -lblas
+#LINUX-MPI FLAGS2=
+#LINUX-MPI 
+#LINUX-MPI #
+#LINUX-MPI # Flags for optimization:
+#LINUX-MPI #
+#LINUX-MPI GCCARG=\'-march=pentiumpro -O6 -mpentiumpro -fno-omit-frame-pointer -funroll-all-loops -fno-inline-functions\'
+#LINUX-MPI FFLAGS= -time -O -save -ccarg $(GCCARG) -Nl999  -x77 -byte_kinds -mismatch_all
+#LINUX-MPI DFLAGS= -c -time -save -Nl999  -x77 -byte_kinds -mismatch_all
+#LINUX-MPI #
+#LINUX-MPI # Flags for debugging::
+#LINUX-MPI #
+#LINUX-MPI #FFLAGS= -g90 -gline -C=all -save -Nl999 -byte_kinds
+#LINUX-MPI #DFLAGS= -g90 -gline -C=all -save -Nl999 -byte_kinds -c
+#LINUX-MPI 
+#LINUX-MPI F77=mpif90
+#LINUX-MPI F90=mpif90
+#LINUX-MPI LD=mpif90
+#LINUX-MPI 
+
+######################################################
+# Linux/Absoft F90
+# Set for Pentium (P5). To get optimum speed for
+# Pentium Pro (P6), add "-B100" to FFLAGS.
+######################################################
+
+#LINUX-ABSOFT # flag for architecture:
+#LINUX-ABSOFT ARCH=absoft
+#LINUX-ABSOFT 
+#LINUX-ABSOFT # code conversion call
+#LINUX-ABSOFT CONVERT=2linux.pl $<
+#LINUX-ABSOFT 
+#LINUX-ABSOFT #
+#LINUX-ABSOFT # General Flags:
+#LINUX-ABSOFT #
+#LINUX-ABSOFT LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#LINUX-ABSOFT  MISC/blockdata.o FPPRESS/blockdata.o etime.o -llapack_absoft -lblas_absoft
+#LINUX-ABSOFT FLAGS2=
+#LINUX-ABSOFT 
+#LINUX-ABSOFT #
+#LINUX-ABSOFT # Flags for optimization:
+#LINUX-ABSOFT #
+#LINUX-ABSOFT FFLAGS= -O -s -YEXT_NAMES=LCS -YEXT_SFX=_
+#LINUX-ABSOFT DFLAGS= -c -s -YEXT_NAMES=LCS -YEXT_SFX=_
+#LINUX-ABSOFT #
+#LINUX-ABSOFT # Flags for debugging::
+#LINUX-ABSOFT #
+#LINUX-ABSOFT #FFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_
+#LINUX-ABSOFT #DFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_
+#LINUX-ABSOFT 
+#LINUX-ABSOFT F77=f90abs
+#LINUX-ABSOFT F90=f90abs
+#LINUX-ABSOFT LD=f90abs
+#LINUX-ABSOFT 
+
+######################################################
+# Solaris f90, compiler version 4.x
+######################################################
+
+#SOLARIS # flag for architecture:
+#SOLARIS ARCH=solaris
+#SOLARIS 
+#SOLARIS # code conversion call
+#SOLARIS CONVERT=2sun.pl $<
+#SOLARIS 
+#SOLARIS #
+#SOLARIS # General Flags:
+#SOLARIS #
+#SOLARIS #LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o 
+#SOLARIS #LFLAGS= -L/usr/local/lib -lstdc++ -lgcc_s 
+#SOLARIS LFLAGS= -xlic_lib=sunperf 
+#SOLARIS FLAGS2=
+#SOLARIS 
+#SOLARIS #
+#SOLARIS # Flags for optimization:
+#SOLARIS #
+#SOLARIS #FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS #DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS CFLAGS= -dalign -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa \
+#SOLARIS         -DSUN -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+#SOLARIS #
+#SOLARIS # Flags for debugging::
+#SOLARIS #
+#SOLARIS #FFLAGS= -g
+#SOLARIS #DFLAGS= -g 
+#SOLARIS 
+#SOLARIS F77=f90
+#SOLARIS F90=f90
+#SOLARIS FC=f90
+#SOLARIS F95=f90
+#SOLARIS LD=f90
+#SOLARIS 
+#SOLARIS #
+#SOLARIS # Flags for QD package:
+#SOLARIS #
+#SOLARIS CC_OPTS= 
+#SOLARIS C_QD_OPTS= -DADD_UNDERSCORE
+#SOLARIS CC=g++
+#SOLARIS CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#SOLARIS AR=ar
+#SOLARIS AR_FLAGS=-crv
+
+######################################################
+# Solaris f90, compiler version >=5.0
+######################################################
+
+#SOLARIS-WS5 # flag for architecture:
+#SOLARIS-WS5 ARCH=solaris
+#SOLARIS-WS5 
+#SOLARIS-WS5 # code conversion call
+#SOLARIS-WS5 CONVERT=2sun.pl $<
+#SOLARIS-WS5 
+#SOLARIS-WS5 #
+#SOLARIS-WS5 # General Flags:
+#SOLARIS-WS5 #
+#SOLARIS-WS5 #LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o 
+#SOLARIS-WS5 LFLAGS= -L/usr/local/lib -lstdc++ -lgcc_s -xlic_lib=sunperf 
+#SOLARIS-WS5 FLAGS2=
+#SOLARIS-WS5 
+#SOLARIS-WS5 #
+#SOLARIS-WS5 # Flags for optimization:
+#SOLARIS-WS5 #
+#SOLARIS-WS5 #FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS-WS5 #DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS-WS5 FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-WS5 DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-WS5 CFLAGS= -dalign -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa \
+#SOLARIS-WS5         -DSUN -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DGOODF90
+#SOLARIS-WS5 #
+#SOLARIS-WS5 # Flags for debugging::
+#SOLARIS-WS5 #
+#SOLARIS-WS5 #FFLAGS= -g
+#SOLARIS-WS5 #DFLAGS= -g 
+#SOLARIS-WS5 
+#SOLARIS-WS5 F77=f90
+#SOLARIS-WS5 F90=f90
+#SOLARIS-WS5 LD=f90
+#SOLARIS-WS5 
+#SOLARIS-WS5 
+#SOLARIS-WS5 #
+#SOLARIS-WS5 # Flags for QD package:
+#SOLARIS-WS5 #
+#SOLARIS-WS5 CC_OPTS= 
+#SOLARIS-WS5 C_QD_OPTS= -DADD_UNDERSCORE
+#SOLARIS-WS5 CC=g++
+#SOLARIS-WS5 CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#SOLARIS-WS5 AR=ar
+#SOLARIS-WS5 AR_FLAGS=-crv
+
+
+######################################################
+# Solaris f90 (patched 64bit compiler), version >= 5.0
+######################################################
+
+#SOLARIS-64 # flag for architecture:
+#SOLARIS-64 ARCH=solaris
+#SOLARIS-64 
+#SOLARIS-64 # code conversion call
+#SOLARIS-64 CONVERT=2sun.pl $<
+#SOLARIS-64 
+#SOLARIS-64 #
+#SOLARIS-64 # General Flags:
+#SOLARIS-64 #
+#SOLARIS-64 #LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o 
+#SOLARIS-64 LFLAGS= -L/usr/local/lib -lstdc++ -lgcc_s -xlic_lib=sunperf 
+#SOLARIS-64 FLAGS2=
+#SOLARIS-64 
+#SOLARIS-64 #
+#SOLARIS-64 # Flags for optimization:
+#SOLARIS-64 #
+#SOLARIS-64 #FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS-64 #DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -xtarget=ultra2 -xcache=16/32/1:2048/64/1
+#SOLARIS-64 FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v9
+#SOLARIS-64 DFLAGS= -O0 -c -dalign -f -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v9
+#SOLARIS-64 CFLAGS= -dalign -fns -ftrap=%none -native -`fpversion -foption` -xarch=v9 \
+#SOLARIS-64         -DGOODF90 -DSUN -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+#SOLARIS-64 #
+#SOLARIS-64 # Flags for debugging::
+#SOLARIS-64 #
+#SOLARIS-64 #FFLAGS= -g
+#SOLARIS-64 #DFLAGS= -g 
+#SOLARIS-64 
+#SOLARIS-64 F77=f90
+#SOLARIS-64 F90=f90
+#SOLARIS-64 LD=f90
+#SOLARIS-64 
+#SOLARIS-64 
+#SOLARIS-64 #
+#SOLARIS-64 # Flags for QD package:
+#SOLARIS-64 #
+#SOLARIS-64 CC_OPTS= 
+#SOLARIS-64 C_QD_OPTS= -DADD_UNDERSCORE
+#SOLARIS-64 CC=g++
+#SOLARIS-64 CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#SOLARIS-64 AR=ar
+#SOLARIS-64 AR_FLAGS=-crv
+
+
+######################################################
+# Solaris f90 with MPI, WS version 4
+######################################################
+#SOLARIS-MPI 
+#SOLARIS-MPI # flag for architecture:
+#SOLARIS-MPI ARCH=solaris-mpi
+#SOLARIS-MPI 
+#SOLARIS-MPI # code conversion call
+#SOLARIS-MPI CONVERT=2sun-mpi.pl $<
+#SOLARIS-MPI 
+#SOLARIS-MPI #
+#SOLARIS-MPI # General Flags:
+#SOLARIS-MPI #
+#SOLARIS-MPI #LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o 
+#SOLARIS-MPI LFLAGS= -L/usr/local/lib -lstdc++ -lgcc_s + \
+#SOLARIS-MPI -L/opt/SUNWhpc/lib -R/opt/SUNWhpc/lib -R/opt/SUNWspro/lib -lmpi -xlic_lib=sunperf 
+#SOLARIS-MPI FLAGS2=
+#SOLARIS-MPI 
+#SOLARIS-MPI #
+#SOLARIS-MPI # Flags for optimization:
+#SOLARIS-MPI #
+#SOLARIS-MPI FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-MPI DFLAGS= -O0 -dalign -f -fast  -c -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-MPI #
+#SOLARIS-MPI # Flags for debugging::
+#SOLARIS-MPI #
+#SOLARIS-MPI #FFLAGS= -g
+#SOLARIS-MPI #DFLAGS= -g 
+#SOLARIS-MPI CFLAGS= -dalign -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa \
+#SOLARIS-MPI         -DSUN -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+#SOLARIS-MPI 
+#SOLARIS-MPI F77=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI F90=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI LD=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI 
+#SOLARIS-MPI 
+#SOLARIS-MPI #
+#SOLARIS-MPI # Flags for QD package:
+#SOLARIS-MPI #
+#SOLARIS-MPI CC_OPTS= 
+#SOLARIS-MPI C_QD_OPTS= -DADD_UNDERSCORE
+#SOLARIS-MPI CC=g++
+#SOLARIS-MPI CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#SOLARIS-MPI AR=ar
+#SOLARIS-MPI AR_FLAGS=-crv
+
+
+######################################################
+# Solaris f90 with MPI WS version 5
+######################################################
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 # flag for architecture:
+#SOLARIS-MPI-WS5 ARCH=solaris-mpi
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 # code conversion call
+#SOLARIS-MPI-WS5 CONVERT=2sun-mpi.pl $<
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 # General Flags:
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 #LFLAGS=  LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o 
+#SOLARIS-MPI-WS5 LFLAGS= -L/usr/local/lib -lstdc++ -lgcc_s  -L/opt/SUNWhpc/lib -R/opt/SUNWhpc/lib -R/opt/SUNWspro/lib -lmpi -xlic_lib=sunperf 
+#SOLARIS-MPI-WS5 FLAGS2=
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 # Flags for optimization:
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 FFLAGS= -O -dalign -f -fast -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-MPI-WS5 DFLAGS= -O0 -dalign -f -fast  -c -xlibmopt -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 # Flags for debugging::
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 #FFLAGS= -g
+#SOLARIS-MPI-WS5 #DFLAGS= -g 
+#SOLARIS-MPI-WS5 CFLAGS= -dalign -fns -ftrap=%none -native -`fpversion -foption` -xarch=v8plusa \
+#SOLARIS-MPI-WS5         -DSUN -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -DGOODF90
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 F77=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI-WS5 F90=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI-WS5 LD=f90 -I/opt/SUNWhpc/include
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 # Flags for QD package:
+#SOLARIS-MPI-WS5 #
+#SOLARIS-MPI-WS5 CC_OPTS= 
+#SOLARIS-MPI-WS5 C_QD_OPTS= -DADD_UNDERSCORE
+#SOLARIS-MPI-WS5 CC=g++
+#SOLARIS-MPI-WS5 CC_FLAGS=-O6 -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#SOLARIS-MPI-WS5 AR=ar
+#SOLARIS-MPI-WS5 AR_FLAGS=-crv
+
+
+######################################################
+# FreeBSD 4.1 with NAG F95 on an Athlon
+######################################################
+
+#FreeBSD # flag for architecture:
+#FreeBSD ARCH=nag-freebsd
+#FreeBSD 
+#FreeBSD # code conversion call
+#FreeBSD CONVERT=2freebsd.pl $<
+#FreeBSD 
+#FreeBSD #
+#FreeBSD # General Flags:
+#FreeBSD #
+#FreeBSD LFLAGS=  -unsharedf95 \
+#FreeBSD   -L/usr/local/lib -llapack_nagf95 -latlas   -lstdc++
+#FreeBSD 
+#FreeBSD # for freeBSD V 3.x use:
+#FreeBSD #LFLAGS=  -unsharedf95 LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#FreeBSD #  MISC/blockdata.o FPPRESS/blockdata.o \
+#FreeBSD #  etime_freebsd.o cio.o \
+#FreeBSD #  -L/usr/local/lib -llapack_nagf95 -latlas   -lstdc++
+#FreeBSD FLAGS2=
+#FreeBSD 
+#FreeBSD #
+#FreeBSD # Flags for optimization:
+#FreeBSD # 
+#FreeBSD # these GCC options are for pgcc on a pentium-pro or PII. 
+#FreeBSD # remove '-march=pentiumpro' for non-P6 or non-PII machines.
+#FreeBSD # Not even on Athlon's !
+#FreeBSD # use '-mpentium' on a P5, '-m6k' or '-mamd6k' on AMD K6's
+#FreeBSD # set to GCCARG='-Wc,-O6,-fno-omit-frame-pointer' on non-PGCC compilers.
+#FreeBSD #
+#FreeBSD # ATTENTION : OF THE FOLLOWING ARGS, THE -DMATH_ASM_INLINE IS CRUCIAL FOR GETTING GOOD
+#FreeBSD # SPEED IN EXPONENTIALS - BUT : THIS IS A VERY DIRTY HACK OF THE FreeBSD MATH LIBRARY,
+#FreeBSD # OR, MORE PRECISELY : OF MATH.H (These pottheads prefer the accurate but slow sun math
+#FreeBSD # library over the possibly fast (by ASM inlining) GNU math library)
+#FreeBSD # 
+#FreeBSD # latest findings : compare-elim does not seem to work !
+#FreeBSD # the opt -mstack-align-double is safe (the other align's are not so safe)
+#FreeBSD # the last 3 -fXXX opts are recommencded for Fortran programs
+#FreeBSD GCCARG=-Wc=/usr/local/bin/gcc295 -Wc,-mk6,-march=k6,-mmx,-O6,-fno-omit-frame-pointer,-fno-compare-elim,-funroll-all-loops,-mstack-align-double,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#FreeBSD #
+#FreeBSD FFLAGS= -ieee=full -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77
+#FreeBSD DFLAGS= -ieee=full -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -info -w=x77
+#FreeBSD BENCHFLAGS=$(FFLAGS)
+#FreeBSD #
+#FreeBSD # Flags for debugging::
+#FreeBSD #
+#FreeBSD #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -ieee=full   -w=x77
+#FreeBSD #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -ieee=full -c -w=x77
+#FreeBSD 
+#FreeBSD F77=f95
+#FreeBSD F90=f95
+#FreeBSD LD=f95
+#FreeBSD
+#FreeBSD CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#FreeBSD 
+#FreeBSD #$(FILES) mkinput phoenix cssppress s3main bench: etime.o
+#FreeBSD 
+#FreeBSD 
+#FreeBSD #
+#FreeBSD # Flags for QD package:
+#FreeBSD #
+#FreeBSD CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#FreeBSD C_QD_OPTS= 
+#FreeBSD CC=g++295
+#FreeBSD CC_FLAGS=-mk6 -march=k6 -mmx -O6 -fno-omit-frame-pointer -fno-compare-elim -funroll-all-loops -mstack-align-double -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#FreeBSD AR=ar
+#FreeBSD AR_FLAGS=-crv
+#FreeBSD #
+#FreeBSD # Flags for SuperLU package:
+#FreeBSD #
+#FreeBSD ARCH_SLU=ar
+#FreeBSD ARCHFLAGS_SLU=-crv
+#FreeBSD CC_SLU=gcc
+#FreeBSD CFLAGS_SLU=$(C_QD_OPTS)
+#FreeBSD FORTRAN=$(F90)
+#FreeBSD LOADER=$(LD)
+#FreeBSD LOADOPTS=
+#FreeBSD CDEFS=-DAdd_
+
+
+
+######################################################
+# FreeBSD 4.1 with NAG F95 on an Athlon, LAM
+######################################################
+
+#FreeBSD-MPI # flag for architecture:
+#FreeBSD-MPI ARCH=nag-freebsd-mpi
+#FreeBSD-MPI 
+#FreeBSD-MPI # code conversion call
+#FreeBSD-MPI CONVERT=2freebsd-mpi.pl $<
+#FreeBSD-MPI 
+#FreeBSD-MPI #
+#FreeBSD-MPI # General Flags:
+#FreeBSD-MPI #
+#FreeBSD-MPI LFLAGS=  -unsharedf95  \
+#FreeBSD-MPI   -L/usr/local/lib -llapack_nagf95 -latlas -latlas   -lstdc++
+#FreeBSD-MPI 
+#FreeBSD-MPI # for freeBSD V 3.x use:
+#FreeBSD-MPI #LFLAGS=  -unsharedf95 LTELINES/kuruczid.o LTELINES/molx.o LTELINES/isotp.o \
+#FreeBSD-MPI #  MISC/blockdata.o FPPRESS/blockdata.o \
+#FreeBSD-MPI #  etime_freebsd.o  \
+#FreeBSD-MPI #  -L/usr/local/lib -llapack_nagf95 -latlas   -lstdc++
+#FreeBSD-MPI FLAGS2=
+#FreeBSD-MPI 
+#FreeBSD-MPI #
+#FreeBSD-MPI # Flags for optimization:
+#FreeBSD-MPI # 
+#FreeBSD-MPI # these GCC options are for pgcc on a pentium-pro or PII. 
+#FreeBSD-MPI # remove '-march=pentiumpro' for non-P6 or non-PII machines.
+#FreeBSD-MPI # Not even on Athlon's !
+#FreeBSD-MPI # use '-mpentium' on a P5, '-m6k' or '-mamd6k' on AMD K6's
+#FreeBSD-MPI # set to GCCARG='-Wc,-O6,-fno-omit-frame-pointer' on non-PGCC compilers.
+#FreeBSD-MPI #
+#FreeBSD-MPI # ATTENTION : OF THE FOLLOWING ARGS, THE -DMATH_ASM_INLINE IS CRUCIAL FOR GETTING GOOD
+#FreeBSD-MPI # SPEED IN EXPONENTIALS - BUT : THIS IS A VERY DIRTY HACK OF THE FreeBSD MATH LIBRARY,
+#FreeBSD-MPI # OR, MORE PRECISELY : OF MATH.H (These pottheads prefer the accurate but slow sun math
+#FreeBSD-MPI # library over the possibly fast (by ASM inlining) GNU math library)
+#FreeBSD-MPI # 
+#FreeBSD-MPI # latest findings : compare-elim does not seem to work !
+#FreeBSD-MPI # the opt -mstack-align-double is safe (the other align's are not so safe)
+#FreeBSD-MPI # the last 3 -fXXX opts are recommencded for Fortran programs
+#FreeBSD-MPI GCCARG=-Wc=/usr/local/bin/gcc295 -Wc,-mk6,-march=k6,-mmx,-O6,-fno-omit-frame-pointer,-fno-compare-elim,-funroll-all-loops,-mstack-align-double,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#FreeBSD-MPI #
+#FreeBSD-MPI FFLAGS= -ieee=full -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -mismatch_all  -w=x77
+#FreeBSD-MPI DFLAGS= -ieee=full -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -mismatch_all  -w=x77
+#FreeBSD-MPI BENCHFLAGS=$(FFLAGS)
+#FreeBSD-MPI #
+#FreeBSD-MPI # Flags for debugging::
+#FreeBSD-MPI #
+#FreeBSD-MPI #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -ieee=full -mismatch_all  -w=x77
+#FreeBSD-MPI #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -ieee=full -c -mismatch_all  -w=x77
+#FreeBSD-MPI 
+#FreeBSD-MPI F77=hf77
+#FreeBSD-MPI F90=hf77
+#FreeBSD-MPI LD=hf77
+#FreeBSD-MPI
+#FreeBSD-MPI CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#FreeBSD-MPI 
+#FreeBSD-MPI #$(FILES) mkinput phoenix cssppress s3main bench: etime.o
+#FreeBSD-MPI 
+#FreeBSD-MPI #
+#FreeBSD-MPI # Flags for QD package:
+#FreeBSD-MPI #
+#FreeBSD-MPI CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#FreeBSD-MPI C_QD_OPTS= 
+#FreeBSD-MPI CC=g++295
+#FreeBSD-MPI CC_FLAGS=-mk6 -march=k6 -mmx -O6 -fno-omit-frame-pointer -fno-compare-elim -funroll-all-loops -mstack-align-double -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#FreeBSD-MPI AR=ar
+#FreeBSD-MPI AR_FLAGS=-crv
+#FreeBSD-MPI #
+#FreeBSD-MPI # Flags for SuperLU package:
+#FreeBSD-MPI #
+#FreeBSD-MPI ARCH_SLU=ar
+#FreeBSD-MPI ARCHFLAGS_SLU=-crv
+#FreeBSD-MPI CC_SLU=gcc
+#FreeBSD-MPI CFLAGS_SLU=$(C_QD_OPTS)
+#FreeBSD-MPI FORTRAN=$(F90)
+#FreeBSD-MPI LOADER=$(LD)
+#FreeBSD-MPI LOADOPTS=
+#FreeBSD-MPI CDEFS=-DAdd_
+
+
+
+
+######################################################
+# NEC SX-5 (sxf90 cross compiler)
+######################################################
+
+#NEC-SX-5 #
+#NEC-SX-5 LFLAGS= -llapack -lblas
+#NEC-SX-5 LFLAGS2= 
+#NEC-SX-5 # flag for architecture:
+#NEC-SX-5 ARCH=necsx5
+#NEC-SX-5 
+#NEC-SX-5 # code conversion call:
+#NEC-SX-5 #CONVERT=mkdir tmp; cp $< tmp
+#NEC-SX-5 #for a uniform calling statement we use a dummy script
+#NEC-SX-5 CONVERT=2necsx5.pl $<
+#NEC-SX-5 
+#NEC-SX-5 #
+#NEC-SX-5 # Flags for optimization:
+#NEC-SX-5 #
+#NEC-SX-5 FFLAGS= -clear -C hopt -dawW -f3 -R1 -sx5 -Wf,-adv,on,-ai,-i,-Ns
+#NEC-SX-5 DFLAGS= -clear -c -C ssafe -dawW -f3 -R1 -sx5 -Wf,-adv,on,-ai,-i,-Ns
+#NEC-SX-5 #
+#NEC-SX-5 # Flags for debugging::
+#NEC-SX-5 #
+#NEC-SX-5 
+#NEC-SX-5 CFLAGS=-DSUN -DGOODF90 -O 
+#NEC-SX-5 BENCHFLAGS= -qipa=inline=noauto $(FFLAGS)
+#NEC-SX-5 
+#NEC-SX-5 FLAGS2=
+#NEC-SX-5 
+#NEC-SX-5 F77=sxf90
+#NEC-SX-5 F90=sxf90
+#NEC-SX-5 LD=sxf90
+#NEC-SX-5 AR=sxar
+#NEC-SX-5 RANLIB=null
+
+######################################################
+# Mac OS X (Darwin)/Absoft F95
+######################################################
+
+#MACOSX-ABSOFT # flag for architecture:
+#MACOSX-ABSOFT ARCH=macosx
+#MACOSX-ABSOFT 
+#MACOSX-ABSOFT # code conversion call
+#MACOSX-ABSOFT CONVERT=2macosx.pl $<
+#MACOSX-ABSOFT 
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT # General Flags:
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT LFLAGS= \
+#MACOSX-ABSOFT  -llapack -lf77blas -latlas -L/sw/lib -lU77  -lstdc++
+#MACOSX-ABSOFT #LFLAGS= cio.o -llapack -lf77blas -latlas
+#MACOSX-ABSOFT FLAGS2=
+#MACOSX-ABSOFT CFLAGS=-DSUN -DMACOSX -DGOODF90 -O -DO_LARGEFILE=0
+#MACOSX-ABSOFT 
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT # Flags for optimization:
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT FFLAGS= -O -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -YDEALLOC=ALL
+#MACOSX-ABSOFT DFLAGS= -c -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -YDEALLOC=ALL
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT # Flags for debugging::
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT #FFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -Rb -Rc -Rs -Rp -YDEALLOC=ALL
+#MACOSX-ABSOFT #DFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -Rb -Rc -Rs -Rp -YDEALLOC=ALL
+#MACOSX-ABSOFT 
+#MACOSX-ABSOFT F77=f95
+#MACOSX-ABSOFT F90=f95
+#MACOSX-ABSOFT F95=f95
+#MACOSX-ABSOFT LD=f95
+#MACOSX-ABSOFT RANLIB=ranlib -s
+#MACOSX-ABSOFT 
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT # Flags for QD package:
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT CC_OPTS=-DHAS_FMA
+#MACOSX-ABSOFT CC_OPTS=
+#MACOSX-ABSOFT C_QD_OPTS=-DADD_UNDERSCORE
+#MACOSX-ABSOFT CC=CC
+#MACOSX-ABSOFT CC_FLAGS=-O4
+#MACOSX-ABSOFT AR=ar
+#MACOSX-ABSOFT AR_FLAGS=-crv
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT # Flags for SuperLU package:
+#MACOSX-ABSOFT #
+#MACOSX-ABSOFT ARCH_SLU=ar
+#MACOSX-ABSOFT ARCHFLAGS_SLU=-crv
+#MACOSX-ABSOFT CC_SLU=cc
+#MACOSX-ABSOFT CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt -DMATH_ASM_INLINE
+#MACOSX-ABSOFT FORTRAN=$(F90)
+#MACOSX-ABSOFT LOADER=$(LD)
+#MACOSX-ABSOFT LOADOPTS=
+#MACOSX-ABSOFT CDEFS=-DAdd_
+
+
+######################################################
+# Mac OS X (Darwin)/Absoft F95 with LAM/MPI 
+######################################################
+
+#MACOSX-ABSOFT-MPI # flag for architecture:
+#MACOSX-ABSOFT-MPI ARCH=macosx-mpi
+#MACOSX-ABSOFT-MPI 
+#MACOSX-ABSOFT-MPI # code conversion call
+#MACOSX-ABSOFT-MPI CONVERT=2macosx-mpi.pl $<
+#MACOSX-ABSOFT-MPI 
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI # General Flags:
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI LFLAGS=  -lstdc++ \
+#MACOSX-ABSOFT-MPI  -L/usr/local/lib -llapack -lf77blas -latlas -L/sw/lib -lU77 -llammpi++ -llamf77mpi -lmpi -llam
+#MACOSX-ABSOFT-MPI FLAGS2=
+#MACOSX-ABSOFT-MPI CFLAGS=-DSUN -DMACOSX -DGOODF90 -O -DO_LARGEFILE=0
+#MACOSX-ABSOFT-MPI 
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI # Flags for optimization:
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI FFLAGS= -O -I/usr/local/LAM/include -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18
+#MACOSX-ABSOFT-MPI DFLAGS= -c -I/usr/local/LAM/include -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI # Flags for debugging::
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI #FFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -Rb -Rc -Rs -Rp
+#MACOSX-ABSOFT-MPI #DFLAGS= -g -s -YEXT_NAMES=LCS -YEXT_SFX=_ -f fixed -YNDFP=1 -B18 -Rb -Rc -Rs -Rp
+#MACOSX-ABSOFT-MPI 
+#MACOSX-ABSOFT-MPI F77=hf77
+#MACOSX-ABSOFT-MPI F90=hf77
+#MACOSX-ABSOFT-MPI F95=hf77
+#MACOSX-ABSOFT-MPI LD=hf77
+#MACOSX-ABSOFT-MPI RANLIB=ranlib -s
+#MACOSX-ABSOFT-MPI 
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI # Flags for QD package:
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI CC_OPTS=-DHAS_FMA
+#MACOSX-ABSOFT-MPI CC_OPTS=
+#MACOSX-ABSOFT-MPI C_QD_OPTS=-DADD_UNDERSCORE
+#MACOSX-ABSOFT-MPI CC=CC
+#MACOSX-ABSOFT-MPI CC_FLAGS=-O4
+#MACOSX-ABSOFT-MPI AR=ar
+#MACOSX-ABSOFT-MPI AR_FLAGS=-crv
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI # Flags for SuperLU package:
+#MACOSX-ABSOFT-MPI #
+#MACOSX-ABSOFT-MPI ARCH_SLU=ar
+#MACOSX-ABSOFT-MPI ARCHFLAGS_SLU=-crv
+#MACOSX-ABSOFT-MPI CC_SLU=cc
+#MACOSX-ABSOFT-MPI CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt -DMATH_ASM_INLINE
+#MACOSX-ABSOFT-MPI FORTRAN=$(F90)
+#MACOSX-ABSOFT-MPI LOADER=$(LD)
+#MACOSX-ABSOFT-MPI LOADOPTS=
+#MACOSX-ABSOFT-MPI CDEFS=-DAdd_
+
+######################################################
+# Mac OS X with NAG F95 on PowerPC
+######################################################
+
+#MACOSX-NAG # flag for architecture:
+#MACOSX-NAG ARCH=nag-freebsd
+#MACOSX-NAG #
+#MACOSX-NAG # code conversion call
+#MACOSX-NAG CONVERT=2freebsd.pl $<
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG # General Flags:
+#MACOSX-NAG #
+#MACOSX-NAG LFLAGS=  \
+#MACOSX-NAG   -L/usr/local/lib -llapack -lcblas -latlas -lblas.netlib -lstdc++
+#MACOSX-NAG 
+#MACOSX-NAG FLAGS2=
+#MACOSX-NAG 
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for optimization:
+#MACOSX-NAG #
+#MACOSX-NAG # ATTENTION : OF THE FOLLOWING ARGS, THE -DMATH_ASM_INLINE IS CRUCIAL FOR GETTING GOOD
+#MACOSX-NAG # SPEED IN EXPONENTIALS - BUT : THIS IS A VERY DIRTY HACK OF THE FreeBSD MATH LIBRARY,
+#MACOSX-NAG # OR, MORE PRECISELY : OF MATH.H (These pottheads prefer the accurate but slow sun math
+#MACOSX-NAG # library over the possibly fast (by ASM inlining) GNU math library)
+#MACOSX-NAG # 
+#MACOSX-NAG # latest findings : compare-elim does not seem to work !
+#MACOSX-NAG # the opt -mstack-align-double is safe (the other align's are not so safe)
+#MACOSX-NAG # the last 3 -fXXX opts are recommencded for Fortran programs
+#MACOSX-NAG GCCARG=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-ffast-math,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG GCCARG_cons=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG ### GCCARG=-Wc,-O4,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-fexpensive-optimizations,-ffast-math,-funsafe-math-optimizations
+#MACOSX-NAG #
+#MACOSX-NAG FFLAGS= -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77
+#MACOSX-NAG FFLAGS_cons= -O4 -save $(GCCARG_cons) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77
+#MACOSX-NAG DFLAGS=  -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -info -w=x77
+#MACOSX-NAG BENCHFLAGS=$(FFLAGS)
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for debugging::
+#MACOSX-NAG #
+#MACOSX-NAG #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -w=x77
+#MACOSX-NAG #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -c -w=x77
+#MACOSX-NAG 
+#MACOSX-NAG F77=f95
+#MACOSX-NAG F90=f95
+#MACOSX-NAG F95=f95
+#MACOSX-NAG LD=f95
+#MACOSX-NAG 
+#MACOSX-NAG CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#MACOSX-NAG #
+#MACOSX-NAG #$(FILES) mkinput phoenix cssppress s3main bench: etime.o
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for QD package:
+#MACOSX-NAG #
+#MACOSX-NAG CC_OPTS=-DHAS_FMA
+#MACOSX-NAG CC_OPTS=
+#MACOSX-NAG C_QD_OPTS=-DADD_UNDERSCORE
+#MACOSX-NAG CC=CC
+#MACOSX-NAG CC_FLAGS=-O4
+#MACOSX-NAG AR=ar
+#MACOSX-NAG AR_FLAGS=-crv
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for SuperLU package:
+#MACOSX-NAG #
+#MACOSX-NAG ARCH_SLU=ar
+#MACOSX-NAG ARCHFLAGS_SLU=-crv
+#MACOSX-NAG CC_SLU=cc
+#MACOSX-NAG CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt -DMATH_ASM_INLINE
+#MACOSX-NAG FORTRAN=$(F90)
+#MACOSX-NAG LOADER=$(LD)
+#MACOSX-NAG LOADOPTS=
+#MACOSX-NAG CDEFS=-DAdd_
+
+
+######################################################
+# Mac OS X with NAG F95 on PowerPC, MPI (LAM)
+######################################################
+
+#MACOSX-NAG-MPI # flag for architecture:
+#MACOSX-NAG-MPI ARCH=nag-freebsd-mpi
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # code conversion call
+#MACOSX-NAG-MPI CONVERT=2freebsd-mpi.pl $<
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # General Flags:
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI LFLAGS=  \
+#MACOSX-NAG-MPI   -L/usr/local/lib -llapack -lcblas -latlas -lblas.netlib -lstdc++ -L/usr/local/LAM/lib -llammpi++ -llamf77mpi -lmpi -llam
+#MACOSX-NAG-MPI 
+#MACOSX-NAG-MPI FLAGS2=
+#MACOSX-NAG-MPI 
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # Flags for optimization:
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # ATTENTION : OF THE FOLLOWING ARGS, THE -DMATH_ASM_INLINE IS CRUCIAL FOR GETTING GOOD
+#MACOSX-NAG-MPI # SPEED IN EXPONENTIALS - BUT : THIS IS A VERY DIRTY HACK OF THE FreeBSD MATH LIBRARY,
+#MACOSX-NAG-MPI # OR, MORE PRECISELY : OF MATH.H (These pottheads prefer the accurate but slow sun math
+#MACOSX-NAG-MPI # library over the possibly fast (by ASM inlining) GNU math library)
+#MACOSX-NAG-MPI # 
+#MACOSX-NAG-MPI # latest findings : compare-elim does not seem to work !
+#MACOSX-NAG-MPI # the opt -mstack-align-double is safe (the other align's are not so safe)
+#MACOSX-NAG-MPI # the last 3 -fXXX opts are recommencded for Fortran programs
+#MACOSX-NAG-MPI GCCARG=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-ffast-math,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG-MPI GCCARG_cons=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG-MPI GCCARG=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG-MPI GCCARG_cons=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG-MPI ### GCCARG=-Wc,-O4,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-fexpensive-optimizations,-ffast-math,-funsafe-math-optimizations
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI FFLAGS= -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77  -mismatch_all
+#MACOSX-NAG-MPI FFLAGS_cons= -O4 -save $(GCCARG_cons) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77  -mismatch_all
+#MACOSX-NAG-MPI DFLAGS=  -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -info -w=x77  -mismatch_all
+#MACOSX-NAG-MPI BENCHFLAGS=$(FFLAGS)
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # Flags for debugging::
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI #FFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -w=x77  -mismatch_all
+#MACOSX-NAG-MPI #DFLAGS= -g -gline -C=all -save -Nl999 -byte_kinds -c -w=x77  -mismatch_all
+#MACOSX-NAG-MPI 
+#MACOSX-NAG-MPI F77=hf77
+#MACOSX-NAG-MPI F90=hf77
+#MACOSX-NAG-MPI F95=hf77
+#MACOSX-NAG-MPI LD=hf77
+#MACOSX-NAG-MPI 
+#MACOSX-NAG-MPI CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI #$(FILES) mkinput phoenix cssppress s3main bench: etime.o
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # Flags for QD package:
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI CC_OPTS=-DHAS_FMA
+#MACOSX-NAG-MPI CC_OPTS=
+#MACOSX-NAG-MPI C_QD_OPTS=-DADD_UNDERSCORE
+#MACOSX-NAG-MPI CC=CC
+#MACOSX-NAG-MPI CC_FLAGS=-O4
+#MACOSX-NAG-MPI AR=ar
+#MACOSX-NAG-MPI AR_FLAGS=-crv
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI # Flags for SuperLU package:
+#MACOSX-NAG-MPI #
+#MACOSX-NAG-MPI ARCH_SLU=ar
+#MACOSX-NAG-MPI ARCHFLAGS_SLU=-crv
+#MACOSX-NAG-MPI CC_SLU=cc
+#MACOSX-NAG-MPI CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt -DMATH_ASM_INLINE
+#MACOSX-NAG-MPI FORTRAN=$(F90)
+#MACOSX-NAG-MPI LOADER=$(LD)
+#MACOSX-NAG-MPI LOADOPTS=
+#MACOSX-NAG-MPI CDEFS=-DAdd_
+
+######################################################
+# Intel f95 for Linux
+######################################################
+
+#INTEL-F95 # flag for architecture:
+#INTEL-F95 ARCH=ifc
+#INTEL-F95 
+#INTEL-F95 # code conversion call
+#INTEL-F95 CONVERT=2pgi.pl $<
+#INTEL-F95 INTELLIBDIR=/opt/intel/mkl/lib/32
+#INTEL-F95 
+#INTEL-F95 #
+#INTEL-F95 # General Flags:
+#INTEL-F95 # (may need to adapt library names for Lapack and blas)
+#INTEL-F95 #
+#INTEL-F95 LFLAGS=  \
+#INTEL-F95  -L$(INTELLIBDIR) -lmkl_lapack -lmkl_p3 \
+#INTEL-F95  -lpthread
+#INTEL-F95 FLAGS2=
+#INTEL-F95 CFLAGS=-DLITTLE_ENDIAN -DGOODF90  -DSUN -O -DO_LARGEFILE=0
+#INTEL-F95 
+#INTEL-F95 #
+#INTEL-F95 # Flags for optimization:
+#INTEL-F95 # CPUOPTS is replaced by build with machine type options
+#INTEL-F95 # 
+#INTEL-F95 FFLAGS= -O3 -unroll -cl,$(TOPDIR)/phx.pcl -C90 -fp -scalar_rep -vec_report5 -WB CPUOPTS
+#INTEL-F95 DFLAGS= -c -O0 -cl,$(TOPDIR)/phx.pcl -C90 
+#INTEL-F95 #
+#INTEL-F95 # Flags for debugging::
+#INTEL-F95 #
+#INTEL-F95 #FFLAGS= -g -C -O0 -C90 -fdiv_check -cl,$(TOPDIR)/phx.pcl
+#INTEL-F95 #DFLAGS= -c -g -C -O0 -C90 -fdiv_check -cl,$(TOPDIR)/phx.pcl
+#INTEL-F95 #
+#INTEL-F95 BENCHFLAGS= $(FFLAGS)
+#INTEL-F95 
+#INTEL-F95 F77=ifc
+#INTEL-F95 F90=ifc
+#INTEL-F95 F95=ifc
+#INTEL-F95 LD=ifc
+#INTEL-F95 
+#INTEL-F95 #
+#INTEL-F95 # Flags for QD package:
+#INTEL-F95 #
+#INTEL-F95 CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#INTEL-F95 C_QD_OPTS= 
+#INTEL-F95 CC=icpc
+#INTEL-F95 CC_FLAGS=-O3 -unroll
+#INTEL-F95 AR=ar
+#INTEL-F95 AR_FLAGS=-crv
+#INTEL-F95 #
+#INTEL-F95 # Flags for SuperLU package:
+#INTEL-F95 #
+#INTEL-F95 ARCH_SLU=ar
+#INTEL-F95 ARCHFLAGS_SLU=-crv
+#INTEL-F95 CC_SLU=icc
+#INTEL-F95 CFLAGS_SLU= -O3 -unroll -vec_report5  -opt_report CPUOPTS
+#INTEL-F95 FORTRAN=$(F90)
+#INTEL-F95 LOADER=$(LD)
+#INTEL-F95 LOADOPTS=
+#INTEL-F95 CDEFS=-DAdd_
+
+######################################################
+# Intel ifc version 7 for Linux
+######################################################
+
+#INTEL-F95-V7 # flag for architecture:
+#INTEL-F95-V7 ARCH=ifc
+#INTEL-F95-V7 
+#INTEL-F95-V7 # code conversion call
+#INTEL-F95-V7 CONVERT=2ifc.pl $<
+#INTEL-F95-V7 INTELLIBDIR=-L/opt/intel/mkl/lib/32 -L/usr/local/hssoft/intel/mkl/lib/32
+#INTEL-F95-V7 
+#INTEL-F95-V7 #
+#INTEL-F95-V7 # General Flags:
+#INTEL-F95-V7 # (may need to adapt library names for Lapack and blas)
+#INTEL-F95-V7 #
+#INTEL-F95-V7 LFLAGS=   \
+#INTEL-F95-V7  $(INTELLIBDIR) -lmkl_lapack  \
+#INTEL-F95-V7  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V7  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V7  -lunwind -Bdynamic -lc -lPEPCF90
+#INTEL-F95-V7 FLAGS2=
+#INTEL-F95-V7 CFLAGS=-ip -DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#INTEL-F95-V7  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -unroll \
+#INTEL-F95-V7  CPUOPTS -vec_report5  -opt_report
+#INTEL-F95-V7 
+#INTEL-F95-V7 #
+#INTEL-F95-V7 # Flags for optimization:
+#INTEL-F95-V7 # CPUOPTS is replaced by build with machine type options
+#INTEL-F95-V7 # 
+#INTEL-F95-V7 FFLAGS= -O3 -ip -unroll -C90 -scalar_rep -vec_report5 CPUOPTS \
+#INTEL-F95-V7  -opt_report -save
+#INTEL-F95-V7 DFLAGS= -c -ip -O0 -C90  CPUOPTS -opt_report -save
+#INTEL-F95-V7 #
+#INTEL-F95-V7 # Flags for debugging::
+#INTEL-F95-V7 #
+#INTEL-F95-V7 #FFLAGS= CPUOPTS -g -CA -CB -CS -CV -O0 -C90 -save
+#INTEL-F95-V7 #FFLAGS= CPUOPTS -g -C -O0 -C90 -save
+#INTEL-F95-V7 #DFLAGS= CPUOPTS -c -g -C -O0 -C90 -save
+#INTEL-F95-V7 #
+#INTEL-F95-V7 BENCHFLAGS= $(FFLAGS)
+#INTEL-F95-V7 
+#INTEL-F95-V7 F77=ifc
+#INTEL-F95-V7 F90=ifc
+#INTEL-F95-V7 F95=ifc
+#INTEL-F95-V7 LD=ifc
+#INTEL-F95-V7 #LD=icpc -v
+#INTEL-F95-V7 
+#INTEL-F95-V7 #
+#INTEL-F95-V7 # Flags for QD package:
+#INTEL-F95-V7 #
+#INTEL-F95-V7 CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#INTEL-F95-V7 C_QD_OPTS= 
+#INTEL-F95-V7 CC=icpc
+#INTEL-F95-V7 CC_FLAGS=-O3 -ip -unroll CPUOPTS -vec_report5  -opt_report
+#INTEL-F95-V7 AR=ar
+#INTEL-F95-V7 AR_FLAGS=-crv
+#INTEL-F95-V7 #
+#INTEL-F95-V7 # Flags for SuperLU package:
+#INTEL-F95-V7 #
+#INTEL-F95-V7 ARCH_SLU=ar
+#INTEL-F95-V7 ARCHFLAGS_SLU=-crv
+#INTEL-F95-V7 CC_SLU=icc
+#INTEL-F95-V7 CFLAGS_SLU= -O3 -ip -unroll -vec_report5  -opt_report CPUOPTS
+#INTEL-F95-V7 FORTRAN=$(F90)
+#INTEL-F95-V7 LOADER=$(LD)
+#INTEL-F95-V7 LOADOPTS=
+#INTEL-F95-V7 CDEFS=-DAdd_
+
+######################################################
+# Intel ifc version 7 for Linux with openMP
+######################################################
+
+#INTEL-F95-V7-SMP # flag for architecture:
+#INTEL-F95-V7-SMP ARCH=ifc
+#INTEL-F95-V7-SMP 
+#INTEL-F95-V7-SMP # code conversion call
+#INTEL-F95-V7-SMP CONVERT=2ifc.pl $<
+#INTEL-F95-V7-SMP INTELLIBDIR=-L/opt/intel/mkl/lib/32 -L/usr/local/hssoft/intel/mkl/lib/32
+#INTEL-F95-V7-SMP 
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP # General Flags:
+#INTEL-F95-V7-SMP # (may need to adapt library names for Lapack and blas)
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP LFLAGS=  \
+#INTEL-F95-V7-SMP  $(INTELLIBDIR) -lmkl_lapack \
+#INTEL-F95-V7-SMP  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V7-SMP  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V7-SMP  -lunwind -Bdynamic -lc -lPEPCF90
+#INTEL-F95-V7-SMP FLAGS2=
+#INTEL-F95-V7-SMP CFLAGS=-ip -DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#INTEL-F95-V7-SMP  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -unroll \
+#INTEL-F95-V7-SMP  CPUOPTS -vec_report5  -opt_report
+#INTEL-F95-V7-SMP 
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP # Flags for optimization:
+#INTEL-F95-V7-SMP # CPUOPTS is replaced by build with machine type options
+#INTEL-F95-V7-SMP # 
+#INTEL-F95-V7-SMP FFLAGS= -O3 -ip -unroll -C90 -scalar_rep -vec_report5 CPUOPTS \
+#INTEL-F95-V7-SMP  -opt_report -openmp -openmp_report2 -save
+#INTEL-F95-V7-SMP DFLAGS= -c -ip -O0 -C90  CPUOPTS -opt_report -openmp -openmp_report2 -save
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP # Flags for debugging::
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP #FFLAGS= -g -C -O0 -C90 -fdiv_check 
+#INTEL-F95-V7-SMP #DFLAGS= -c -g -C -O0 -C90 -fdiv_check 
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP BENCHFLAGS= $(FFLAGS)
+#INTEL-F95-V7-SMP 
+#INTEL-F95-V7-SMP F77=ifc
+#INTEL-F95-V7-SMP F90=ifc
+#INTEL-F95-V7-SMP LD=ifc
+#INTEL-F95-V7-SMP #LD=icpc -v
+#INTEL-F95-V7-SMP 
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP # Flags for QD package:
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP CC_OPTS=-Dx86 -DADD_UNDERSCORE
+#INTEL-F95-V7-SMP C_QD_OPTS= 
+#INTEL-F95-V7-SMP CC=icpc
+#INTEL-F95-V7-SMP CC_FLAGS=-O3 -ip -unroll CPUOPTS -vec_report5  -opt_report
+#INTEL-F95-V7-SMP AR=ar
+#INTEL-F95-V7-SMP AR_FLAGS=-crv
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP # Flags for SuperLU package:
+#INTEL-F95-V7-SMP #
+#INTEL-F95-V7-SMP ARCH_SLU=ar
+#INTEL-F95-V7-SMP ARCHFLAGS_SLU=-crv
+#INTEL-F95-V7-SMP CC_SLU=icc
+#INTEL-F95-V7-SMP CFLAGS_SLU= -O3 -ip -unroll -vec_report5  -opt_report CPUOPTS -openmp -openmp_report2
+#INTEL-F95-V7-SMP FORTRAN=$(F90)
+#INTEL-F95-V7-SMP LOADER=$(LD)
+#INTEL-F95-V7-SMP LOADOPTS=
+#INTEL-F95-V7-SMP CDEFS=-DAdd_
+
+#############################################################
+# Apple G4/G5, xlf90_r 8.1 for G4/G5 in 32-bit mode
+# on OSX 10.4 using Accelerate framework
+#############################################################
+
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit LAPACK=-framework Accelerate -qaltivec
+#MACOSX-XLF-32bit LFLAGS= -lC  -L/usr/local/lib -lstdc++ 
+#MACOSX-XLF-32bit LFLAGS2= 
+#MACOSX-XLF-32bit # flag for architecture:
+#MACOSX-XLF-32bit ARCH=macosx
+#MACOSX-XLF-32bit 
+#MACOSX-XLF-32bit # code conversion call:
+#MACOSX-XLF-32bit #CONVERT=mkdir tmp; cp $< tmp
+#MACOSX-XLF-32bit #for a uniform calling statement we use a dummy script
+#MACOSX-XLF-32bit CONVERT=2macosx-xlf.pl $<
+#MACOSX-XLF-32bit 
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit # Flags for optimization:
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit FFLAGS= -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit  -qinitauto=fff00000 -qalign=4k:struct=natural -qcache=auto -qdpc=e \
+#MACOSX-XLF-32bit  -qmaxmem=-1 -qnozerosize -qsave -qhot -qstrict -qtune=auto \
+#MACOSX-XLF-32bit  -qfixed -qspill=32648 -qhalt=S -qnostrictieeemod -qdirective
+#MACOSX-XLF-32bit # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#MACOSX-XLF-32bit DFLAGS= -c -qspill=32648 -qmaxmem=-1 -qalign=4k:struct=natural \
+#MACOSX-XLF-32bit -qfixed -qsave -qarch=auto -qtune=auto -qnohot -qstrict -qhalt=S -qnostrictieeemod  -qdirective
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit # Flags for debugging::
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#MACOSX-XLF-32bit #FFLAGS= -C -g -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit #DFLAGS= -C -g -c -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit 
+#MACOSX-XLF-32bit CFLAGS=-qaltivec -DSUN -O -DO_LARGEFILE=0 -DGOODF90 -DXLF -DOSX_ALTIVEC
+#MACOSX-XLF-32bit 
+#MACOSX-XLF-32bit FLAGS2=
+#MACOSX-XLF-32bit 
+#MACOSX-XLF-32bit CC=cc_r
+#MACOSX-XLF-32bit F77=xlf95_r
+#MACOSX-XLF-32bit F90=xlf95_r
+#MACOSX-XLF-32bit F95=xlf95_r
+#MACOSX-XLF-32bit F95=xlf95_r
+#MACOSX-XLF-32bit LD=xlc++_r -framework Accelerate -qaltivec \
+#MACOSX-XLF-32bit -L/opt/ibmcmp/xlsmp/1.4/lib -L/opt/ibmcmp/xlf/8.1/lib \
+#MACOSX-XLF-32bit -L/opt/ibmcmp/xlsmp/1.4/../../lib -L/opt/ibmcmp/xlf/8.1/../../lib \
+#MACOSX-XLF-32bit -L/usr/lib/gcc/darwin/3.3 -L/usr/lib/gcc/darwin \
+#MACOSX-XLF-32bit -L/usr/libexec/gcc/darwin/ppc/3.3/../../.. \
+#MACOSX-XLF-32bit -lxlf90 -lxlopt -lxlomp_ser -lxl -lxlfmath -lm \
+#MACOSX-XLF-32bit -lc -lgcc -lSystem \
+#MACOSX-XLF-32bit  -qxlf90=noautodealloc:nosignedzero
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit # Flags for QD package:
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit C_QD_OPTS= -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit CC_QD=xlc++_r 
+#MACOSX-XLF-32bit CC_FLAGS= -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit AR=ar 
+#MACOSX-XLF-32bit AR_FLAGS=-crv
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit # Flags for QD package:
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit #CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit #CC_OPTS=
+#MACOSX-XLF-32bit #C_QD_OPTS=
+#MACOSX-XLF-32bit #CC_QD=CC
+#MACOSX-XLF-32bit #CC_FLAGS=-O4
+#MACOSX-XLF-32bit #AR=ar
+#MACOSX-XLF-32bit #AR_FLAGS=-crv
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit # Flags for SuperLU package:
+#MACOSX-XLF-32bit #
+#MACOSX-XLF-32bit ARCH_SLU=ar 
+#MACOSX-XLF-32bit ARCHFLAGS_SLU=-crv
+#MACOSX-XLF-32bit CC_SLU=cc_r 
+#MACOSX-XLF-32bit CFLAGS_SLU= -DOSX -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit FORTRAN=$(F90)
+#MACOSX-XLF-32bit LOADER=$(LD)
+#MACOSX-XLF-32bit LOADOPTS=
+#MACOSX-XLF-32bit CDEFS=-DNoChange
+
+#############################################################
+# Apple G4, xlf90_r 8.1 for G4/G5 in 32-bit mode on OSX 10.2/10.3
+#############################################################
+
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER LAPACK=-framework Accelerate -qaltivec
+#MACOSX-XLF-32bit-PANTHER LFLAGS= -lC  -L/usr/local/lib -lstdc++ 
+#MACOSX-XLF-32bit-PANTHER LFLAGS2= 
+#MACOSX-XLF-32bit-PANTHER # flag for architecture:
+#MACOSX-XLF-32bit-PANTHER ARCH=macosx
+#MACOSX-XLF-32bit-PANTHER 
+#MACOSX-XLF-32bit-PANTHER # code conversion call:
+#MACOSX-XLF-32bit-PANTHER #CONVERT=mkdir tmp; cp $< tmp
+#MACOSX-XLF-32bit-PANTHER #for a uniform calling statement we use a dummy script
+#MACOSX-XLF-32bit-PANTHER CONVERT=2macosx-xlf.pl $<
+#MACOSX-XLF-32bit-PANTHER 
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER # Flags for optimization:
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER FFLAGS= -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit-PANTHER  -qinitauto=fff00000 -qalign=4k:struct=natural -qcache=auto -qdpc=e \
+#MACOSX-XLF-32bit-PANTHER  -qmaxmem=-1 -qnozerosize -qsave -qhot -qstrict -qtune=auto \
+#MACOSX-XLF-32bit-PANTHER  -qfixed -qspill=32648 -qhalt=S -qnostrictieeemod -qdirective
+#MACOSX-XLF-32bit-PANTHER # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#MACOSX-XLF-32bit-PANTHER DFLAGS= -c -qspill=32648 -qmaxmem=-1 -qalign=4k:struct=natural \
+#MACOSX-XLF-32bit-PANTHER -qfixed -qsave -qarch=auto -qtune=auto -qnohot -qstrict -qhalt=S -qnostrictieeemod  -qdirective
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER # Flags for debugging::
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#MACOSX-XLF-32bit-PANTHER #FFLAGS= -C -g -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit-PANTHER #DFLAGS= -C -g -c -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit-PANTHER 
+#MACOSX-XLF-32bit-PANTHER CFLAGS=-qaltivec -DSUN -O -DO_LARGEFILE=0 -DGOODF90 -DXLF -DOSX_ALTIVEC
+#MACOSX-XLF-32bit-PANTHER 
+#MACOSX-XLF-32bit-PANTHER FLAGS2=
+#MACOSX-XLF-32bit-PANTHER 
+#MACOSX-XLF-32bit-PANTHER CC=cc_r
+#MACOSX-XLF-32bit-PANTHER F77=xlf95_r
+#MACOSX-XLF-32bit-PANTHER F90=xlf95_r
+#MACOSX-XLF-32bit-PANTHER F95=xlf95_r
+#MACOSX-XLF-32bit-PANTHER LD=xlc++_r -framework Accelerate -qaltivec \
+#MACOSX-XLF-32bit-PANTHER -L/opt/ibmcmp/xlsmp/1.4/lib -L/opt/ibmcmp/xlf/8.1/lib \
+#MACOSX-XLF-32bit-PANTHER -L/opt/ibmcmp/xlsmp/1.4/../../lib -L/opt/ibmcmp/xlf/8.1/../../lib \
+#MACOSX-XLF-32bit-PANTHER -L/usr/lib/gcc/darwin/3.3 -L/usr/lib/gcc/darwin \
+#MACOSX-XLF-32bit-PANTHER -L/usr/libexec/gcc/darwin/ppc/3.3/../../.. \
+#MACOSX-XLF-32bit-PANTHER -lxlf90 -lxlopt -lxlomp_ser -lxl -lxlfmath -lm \
+#MACOSX-XLF-32bit-PANTHER -lc -lgcc -lSystem \
+#MACOSX-XLF-32bit-PANTHER  -qxlf90=noautodealloc:nosignedzero
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-PANTHER C_QD_OPTS= -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit-PANTHER CC_QD=xlc++_r 
+#MACOSX-XLF-32bit-PANTHER CC_FLAGS= -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit-PANTHER AR=ar 
+#MACOSX-XLF-32bit-PANTHER AR_FLAGS=-crv
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER #CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-PANTHER #CC_OPTS=
+#MACOSX-XLF-32bit-PANTHER #C_QD_OPTS=
+#MACOSX-XLF-32bit-PANTHER #CC_QD=CC
+#MACOSX-XLF-32bit-PANTHER #CC_FLAGS=-O4
+#MACOSX-XLF-32bit-PANTHER #AR=ar
+#MACOSX-XLF-32bit-PANTHER #AR_FLAGS=-crv
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER # Flags for SuperLU package:
+#MACOSX-XLF-32bit-PANTHER #
+#MACOSX-XLF-32bit-PANTHER ARCH_SLU=ar 
+#MACOSX-XLF-32bit-PANTHER ARCHFLAGS_SLU=-crv
+#MACOSX-XLF-32bit-PANTHER CC_SLU=cc_r 
+#MACOSX-XLF-32bit-PANTHER CFLAGS_SLU= -DOSX -qarch=auto -qtune=auto -qstrict -O5
+#MACOSX-XLF-32bit-PANTHER FORTRAN=$(F90)
+#MACOSX-XLF-32bit-PANTHER LOADER=$(LD)
+#MACOSX-XLF-32bit-PANTHER LOADOPTS=
+#MACOSX-XLF-32bit-PANTHER CDEFS=-DNoChange
+
+############################################################
+# Apple G4, xlf90_r 8.1 for G4/G5 in 32-bit mode on OSX 10.2
+# openMP mode (no auto-parallelizing!)
+############################################################
+
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER LAPACK=-llapack_atl_xlf -lptcblas_xlf -lptf77blas_xlf -latlas_xlf
+#MACOSX-XLF-32bit-SMP-PANTHER LFLAGS= -lC  \
+#MACOSX-XLF-32bit-SMP-PANTHER  $(TOPDIR)/cio.o \
+#MACOSX-XLF-32bit-SMP-PANTHER  $(TOPDIR)/LTELINES/kuruczid.o $(TOPDIR)/LTELINES/molx.o $(TOPDIR)/LTELINES/isotp.o \
+#MACOSX-XLF-32bit-SMP-PANTHER  $(TOPDIR)/MISC/blockdata.o $(TOPDIR)/FPPRESS/blockdata.o \
+#MACOSX-XLF-32bit-SMP-PANTHER  -L/usr/local/lib -lstdc++ \
+#MACOSX-XLF-32bit-SMP-PANTHER  -llapack_atl_xlf -lptcblas_xlf -lptf77blas_xlf -latlas_xlf
+#MACOSX-XLF-32bit-SMP-PANTHER LFLAGS2= 
+#MACOSX-XLF-32bit-SMP-PANTHER # flag for architecture:
+#MACOSX-XLF-32bit-SMP-PANTHER ARCH=macosx
+#MACOSX-XLF-32bit-SMP-PANTHER 
+#MACOSX-XLF-32bit-SMP-PANTHER # code conversion call:
+#MACOSX-XLF-32bit-SMP-PANTHER #CONVERT=mkdir tmp; cp $< tmp
+#MACOSX-XLF-32bit-SMP-PANTHER #for a uniform calling statement we use a dummy script
+#MACOSX-XLF-32bit-SMP-PANTHER CONVERT=2macosx-xlf.pl $<
+#MACOSX-XLF-32bit-SMP-PANTHER 
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER # Flags for optimization:
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER FFLAGS= -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit-SMP-PANTHER  -qinitauto=fff00000 -qalign=4k -qcache=auto -qdpc=e \
+#MACOSX-XLF-32bit-SMP-PANTHER  -qmaxmem=-1 -qnozerosize -qsave -qhot -qstrict -qtune=auto \
+#MACOSX-XLF-32bit-SMP-PANTHER  -qfixed -qspill=32648 -qhalt=S \
+#MACOSX-XLF-32bit-SMP-PANTHER  -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt -qdirective
+#MACOSX-XLF-32bit-SMP-PANTHER DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#MACOSX-XLF-32bit-SMP-PANTHER -qfixed -qsave -qarch=auto -qtune=auto -qnohot -qstrict -qhalt=S \
+#MACOSX-XLF-32bit-SMP-PANTHER  -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt -qdirective
+#MACOSX-XLF-32bit-SMP-PANTHER BENCHFLAGS=$(FFLAGS)
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER # Flags for debugging::
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER #LFLAGS=-berok -bh:12 -bC:calls.ld -bloadmap:map.ld -lessl_r -lblas
+#MACOSX-XLF-32bit-SMP-PANTHER #FFLAGS= -C -g -qsave -qnoextchk -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto -q64
+#MACOSX-XLF-32bit-SMP-PANTHER #DFLAGS= -C -g -c -qsave -qnoextchk -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto -q64
+#MACOSX-XLF-32bit-SMP-PANTHER 
+#MACOSX-XLF-32bit-SMP-PANTHER CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90 -DXLF -DOSX_ALTIVEC
+#MACOSX-XLF-32bit-SMP-PANTHER 
+#MACOSX-XLF-32bit-SMP-PANTHER FLAGS2=
+#MACOSX-XLF-32bit-SMP-PANTHER 
+#MACOSX-XLF-32bit-SMP-PANTHER CC=cc_r
+#MACOSX-XLF-32bit-SMP-PANTHER F77=xlf95_r
+#MACOSX-XLF-32bit-SMP-PANTHER F90=xlf95_r
+#MACOSX-XLF-32bit-SMP-PANTHER LD=xlC_r -framework Accelerate -qaltivec \
+#MACOSX-XLF-32bit-SMP-PANTHER -L/opt/ibmcmp/xlsmp/1.4/lib -L/opt/ibmcmp/xlf/8.1/lib \
+#MACOSX-XLF-32bit-SMP-PANTHER -L/opt/ibmcmp/xlsmp/1.4/../../lib -L/opt/ibmcmp/xlf/8.1/../../lib \
+#MACOSX-XLF-32bit-SMP-PANTHER -L/usr/lib/gcc/darwin/3.3 -L/usr/lib/gcc/darwin \
+#MACOSX-XLF-32bit-SMP-PANTHER -L/usr/libexec/gcc/darwin/ppc/3.3/../../.. \
+#MACOSX-XLF-32bit-SMP-PANTHER -lxlf90 -lxlopt -lxl -lxlfmath -lm \
+#MACOSX-XLF-32bit-SMP-PANTHER -lc -lgcc -lSystem \
+#MACOSX-XLF-32bit-SMP-PANTHER -qxlf90=noautodealloc:nosignedzero
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-SMP-PANTHER C_QD_OPTS= -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-SMP-PANTHER CC_QD=xlC_r 
+#MACOSX-XLF-32bit-SMP-PANTHER CC_FLAGS= -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-SMP-PANTHER AR=ar 
+#MACOSX-XLF-32bit-SMP-PANTHER AR_FLAGS=-crv
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-SMP-PANTHER CC_OPTS=
+#MACOSX-XLF-32bit-SMP-PANTHER CC_QD=CC
+#MACOSX-XLF-32bit-SMP-PANTHER CC_FLAGS=-O4
+#MACOSX-XLF-32bit-SMP-PANTHER AR=ar
+#MACOSX-XLF-32bit-SMP-PANTHER AR_FLAGS=-crv
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER # Flags for SuperLU package:
+#MACOSX-XLF-32bit-SMP-PANTHER #
+#MACOSX-XLF-32bit-SMP-PANTHER ARCH_SLU=ar 
+#MACOSX-XLF-32bit-SMP-PANTHER ARCHFLAGS_SLU=-crv
+#MACOSX-XLF-32bit-SMP-PANTHER CC_SLU=cc_r 
+#MACOSX-XLF-32bit-SMP-PANTHER CFLAGS_SLU= -DOSX -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-SMP-PANTHER FORTRAN=$(F90)
+#MACOSX-XLF-32bit-SMP-PANTHER LOADER=$(LD)
+#MACOSX-XLF-32bit-SMP-PANTHER LOADOPTS=
+#MACOSX-XLF-32bit-SMP-PANTHER CDEFS=-DNoChange
+
+#############################################################
+# Apple G4, xlf90_r 8.1 for G4/G5 in 32-bit mode on OSX 10.2
+# MPI mode (tested for LAM 7.0.2)
+#############################################################
+
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER LAPACK=-llapack_atl_xlf -lptcblas_xlf -lptf77blas_xlf -latlas_xlf
+#MACOSX-XLF-32bit-MPI-PANTHER LFLAGS= -lC  \
+#MACOSX-XLF-32bit-MPI-PANTHER  $(TOPDIR)/cio.o \
+#MACOSX-XLF-32bit-MPI-PANTHER  $(TOPDIR)/LTELINES/kuruczid.o $(TOPDIR)/LTELINES/molx.o $(TOPDIR)/LTELINES/isotp.o \
+#MACOSX-XLF-32bit-MPI-PANTHER  $(TOPDIR)/MISC/blockdata.o $(TOPDIR)/FPPRESS/blockdata.o \
+#MACOSX-XLF-32bit-MPI-PANTHER  -L/usr/local/lib -lstdc++ \
+#MACOSX-XLF-32bit-MPI-PANTHER  -llapack_atl_xlf -lptcblas_xlf -lptf77blas_xlf -latlas_xlf
+#MACOSX-XLF-32bit-MPI-PANTHER LFLAGS2= 
+#MACOSX-XLF-32bit-MPI-PANTHER # flag for architecture:
+#MACOSX-XLF-32bit-MPI-PANTHER ARCH=macosx-mpi
+#MACOSX-XLF-32bit-MPI-PANTHER 
+#MACOSX-XLF-32bit-MPI-PANTHER # code conversion call:
+#MACOSX-XLF-32bit-MPI-PANTHER #CONVERT=mkdir tmp; cp $< tmp
+#MACOSX-XLF-32bit-MPI-PANTHER #for a uniform calling statement we use a dummy script
+#MACOSX-XLF-32bit-MPI-PANTHER CONVERT=2macosx-xlf-mpi.pl $<
+#MACOSX-XLF-32bit-MPI-PANTHER 
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for optimization:
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER FFLAGS= -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qinitauto=fff00000 -qalign=4k:struct=natural -qcache=auto -qdpc=e \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qmaxmem=-1 -qnozerosize -qsave -qhot -qstrict -qtune=auto \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qfixed -qspill=32648 -qhalt=S -qnostrictieeemod
+#MACOSX-XLF-32bit-MPI-PANTHER # -qsmp=noauto -qsource -qreport=smplist,hotlist -qlistopt
+#MACOSX-XLF-32bit-MPI-PANTHER DFLAGS= -c -qspill=32648 -qmaxmem=-1 \
+#MACOSX-XLF-32bit-MPI-PANTHER -qfixed -qsave -qarch=auto -qtune=auto -qnohot -qstrict -qhalt=S
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for debugging::
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER #FFLAGS= -C -g -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit-MPI-PANTHER #DFLAGS= -C -g -c -qsave -qfixed -qspill=32648 -qflttrap=enab:ov:zero:inv -qarch=auto
+#MACOSX-XLF-32bit-MPI-PANTHER 
+#MACOSX-XLF-32bit-MPI-PANTHER CFLAGS=-qaltivec -DSUN -O -DO_LARGEFILE=0 -DGOODF90 -DXLF -DOSX_ALTIVEC
+#MACOSX-XLF-32bit-MPI-PANTHER 
+#MACOSX-XLF-32bit-MPI-PANTHER FLAGS2=
+#MACOSX-XLF-32bit-MPI-PANTHER 
+#MACOSX-XLF-32bit-MPI-PANTHER CC=cc_r
+#MACOSX-XLF-32bit-MPI-PANTHER F77=mpif77
+#MACOSX-XLF-32bit-MPI-PANTHER F90=mpif77
+#MACOSX-XLF-32bit-MPI-PANTHER LD=xlC_r -framework Accelerate -qaltivec \
+#MACOSX-XLF-32bit-MPI-PANTHER -L/opt/ibmcmp/xlsmp/1.4/lib -L/opt/ibmcmp/xlf/8.1/lib \
+#MACOSX-XLF-32bit-MPI-PANTHER -L/opt/ibmcmp/xlsmp/1.4/../../lib -L/opt/ibmcmp/xlf/8.1/../../lib \
+#MACOSX-XLF-32bit-MPI-PANTHER -L/usr/lib/gcc/darwin/3.3 -L/usr/lib/gcc/darwin \
+#MACOSX-XLF-32bit-MPI-PANTHER -L/usr/libexec/gcc/darwin/ppc/3.3/../../.. \
+#MACOSX-XLF-32bit-MPI-PANTHER -L/usr/local/lam_7/lib \
+#MACOSX-XLF-32bit-MPI-PANTHER -lxlf90 -lxlopt -lxlomp_ser -lxl -lxlfmath -lm \
+#MACOSX-XLF-32bit-MPI-PANTHER -lc -lgcc -lSystem -L/usr/local/lam_7/lib -llam -llamf77mpi -llammpi++ -llammpio -lmpi \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qxlf90=noautodealloc:nosignedzero
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-MPI-PANTHER C_QD_OPTS= -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-MPI-PANTHER CC_QD=xlc++_r 
+#MACOSX-XLF-32bit-MPI-PANTHER CC_FLAGS= -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-MPI-PANTHER AR=ar 
+#MACOSX-XLF-32bit-MPI-PANTHER AR_FLAGS=-crv
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for QD package:
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER #CC_OPTS=-DHAS_FMA
+#MACOSX-XLF-32bit-MPI-PANTHER #CC_OPTS=
+#MACOSX-XLF-32bit-MPI-PANTHER #C_QD_OPTS=
+#MACOSX-XLF-32bit-MPI-PANTHER #CC_QD=CC
+#MACOSX-XLF-32bit-MPI-PANTHER #CC_FLAGS=-O4
+#MACOSX-XLF-32bit-MPI-PANTHER #AR=ar
+#MACOSX-XLF-32bit-MPI-PANTHER #AR_FLAGS=-crv
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for SuperLU package:
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER ARCH_SLU=ar 
+#MACOSX-XLF-32bit-MPI-PANTHER ARCHFLAGS_SLU=-crv
+#MACOSX-XLF-32bit-MPI-PANTHER CC_SLU=cc_r
+#MACOSX-XLF-32bit-MPI-PANTHER CFLAGS_SLU= -DOSX -qarch=auto -qtune=auto -qstrict -O3
+#MACOSX-XLF-32bit-MPI-PANTHER FORTRAN=$(F90)
+#MACOSX-XLF-32bit-MPI-PANTHER LOADER=$(LD)
+#MACOSX-XLF-32bit-MPI-PANTHER LOADOPTS=
+#MACOSX-XLF-32bit-MPI-PANTHER CDEFS=-DNoChange
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER # Flags for SuperLU_DIST package:
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER ARCH_SLU_DIST=ar
+#MACOSX-XLF-32bit-MPI-PANTHER ARCHFLAGS_SLU_DIST=-crv
+#MACOSX-XLF-32bit-MPI-PANTHER CC_SLU_DIST=cc_r -I/usr/local/lam/include
+#MACOSX-XLF-32bit-MPI-PANTHER CFLAGS_SLU_DIST=$(CFLAGS_SLU) -DOSX \
+#MACOSX-XLF-32bit-MPI-PANTHER  -D_SP -qalias=allptrs -DDEBUGlevel=0 -DPRNTlevel=0
+#MACOSX-XLF-32bit-MPI-PANTHER FORTRAN=$(F90) 
+#MACOSX-XLF-32bit-MPI-PANTHER FFLAGS_SLU_DIST= -WF,-Dsp -Q -qinit=f90ptr \
+#MACOSX-XLF-32bit-MPI-PANTHER  -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qnohot -qinitauto=fff00000 -qalign=4k:struct=natural \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qcache=auto -qdpc=e -qnostrictieeemod \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qmaxmem=-1 -qnozerosize -qsave \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qsigtrap -qstrict -qtune=auto \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qfixed -qspill=32648 -qhalt=S -qsuffix=f=f 
+#MACOSX-XLF-32bit-MPI-PANTHER F95FLAGS_SLU_DIST= -WF,-Dsp -Q -qinit=f90ptr \
+#MACOSX-XLF-32bit-MPI-PANTHER  -O3 -qarch=auto -qfloat=fltint:rsqrt \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qnohot -qinitauto=fff00000 -qalign=4k:struct=natural \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qcache=auto -qdpc=e -qnostrictieeemod \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qmaxmem=-1 -qnozerosize -qsave \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qsigtrap -qstrict -qtune=auto \
+#MACOSX-XLF-32bit-MPI-PANTHER  -qfree -qspill=32648 -qhalt=S -qsuffix=f=f90 
+#MACOSX-XLF-32bit-MPI-PANTHER #
+#MACOSX-XLF-32bit-MPI-PANTHER LOADER=$(LD)
+#MACOSX-XLF-32bit-MPI-PANTHER LOADOPTS=
+#MACOSX-XLF-32bit-MPI-PANTHER CDEFS=-DNoChange -DFNAME=1
+#MACOSX-XLF-32bit-MPI-PANTHER BLASDEF_SLU_DIST= -DUSE_VENDOR_BLAS
+#MACOSX-XLF-32bit-MPI-PANTHER BLASLIB_SLU_DIST= -llapack_atl_xlf -lptcblas_xlf -lptf77blas_xlf -latlas_xlf
+#MACOSX-XLF-32bit-MPI-PANTHER NOOPTS_SLU_DIST=
+#MACOSX-XLF-32bit-MPI-PANTHER 
+######################################################
+# Mac OS X with NAG F95 on PowerPC using Accelerate framework on 10.4
+######################################################
+
+#MACOSX-NAG # flag for architecture:
+#MACOSX-NAG ARCH=nag-freebsd
+#MACOSX-NAG #
+#MACOSX-NAG # code conversion call
+#MACOSX-NAG CONVERT=2freebsd.pl $<
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG # General Flags:
+#MACOSX-NAG #
+#MACOSX-NAG LAPACK=
+#MACOSX-NAG LFLAGS= -framework Accelerate -lstdc++  -lgcc 
+#MACOSX-NAG
+#MACOSX-NAG 
+#MACOSX-NAG FLAGS2=
+#MACOSX-NAG 
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for optimization:
+#MACOSX-NAG #
+#MACOSX-NAG # ATTENTION : OF THE FOLLOWING ARGS, THE -DMATH_ASM_INLINE IS CRUCIAL FOR GETTING GOOD
+#MACOSX-NAG # SPEED IN EXPONENTIALS - BUT : THIS IS A VERY DIRTY HACK OF THE FreeBSD MATH LIBRARY,
+#MACOSX-NAG # OR, MORE PRECISELY : OF MATH.H (These pottheads prefer the accurate but slow sun math
+#MACOSX-NAG # library over the possibly fast (by ASM inlining) GNU math library)
+#MACOSX-NAG # 
+#MACOSX-NAG # latest findings : compare-elim does not seem to work !
+#MACOSX-NAG # the opt -mstack-align-double is safe (the other align's are not so safe)
+#MACOSX-NAG # the last 3 -fXXX opts are recommencded for Fortran programs
+#MACOSX-NAG #old GCCARG=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-ffast-math,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG #old GCCARG_cons=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-fmove-all-movables,-freduce-all-givs,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG GCCARG=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-ffast-math,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG GCCARG_cons=-Wc,-O4,-mcpu=7450,-mdynamic-no-pic,-fstrict-aliasing,-fno-omit-frame-pointer,-funroll-all-loops,-frerun-loop-opt,-DMATH_ASM_INLINE
+#MACOSX-NAG #
+#MACOSX-NAG FFLAGS= -framework Accelerate -O4 -save $(GCCARG) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77 -ieee=full
+#MACOSX-NAG FFLAGS_cons= -framework Accelerate -O4 -save $(GCCARG_cons) -maxcontin=999 -kind=byte -dcfuns -fixed -info -w=x77 -ieee=full
+#MACOSX-NAG DFLAGS= -framework Accelerate -c -save -maxcontin=999 -kind=byte  -dcfuns -fixed -info -w=x77
+#MACOSX-NAG BENCHFLAGS=$(FFLAGS)
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for debugging::
+#MACOSX-NAG #
+#MACOSX-NAG #FFLAGS= -framework Accelerate -g -gline -C=all -save -Nl999 -byte_kinds -w=x77 -ieee=full
+#MACOSX-NAG #DFLAGS= -framework Accelerate -g -gline -C=all -save -Nl999 -byte_kinds -c -w=x77 -ieee=full
+#MACOSX-NAG 
+#MACOSX-NAG F77=f95
+#MACOSX-NAG F90=f95
+#MACOSX-NAG F95=f95
+#MACOSX-NAG LD=f95
+#MACOSX-NAG 
+#MACOSX-NAG CFLAGS=-DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#MACOSX-NAG #
+#MACOSX-NAG #$(FILES) mkinput phoenix cssppress s3main bench: etime.o
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for QD package:
+#MACOSX-NAG #
+#MACOSX-NAG CC_OPTS=-DHAS_FMA
+#MACOSX-NAG CC_OPTS=
+#MACOSX-NAG C_QD_OPTS=-DADD_UNDERSCORE
+#MACOSX-NAG CC_QD=CC
+#MACOSX-NAG CC_FLAGS=-O4
+#MACOSX-NAG AR=ar
+#MACOSX-NAG AR_FLAGS=-crv
+#MACOSX-NAG #
+#MACOSX-NAG # Flags for SuperLU package:
+#MACOSX-NAG #
+#MACOSX-NAG ARCH_SLU=ar
+#MACOSX-NAG ARCHFLAGS_SLU=-crv
+#MACOSX-NAG CC_SLU=cc
+#MACOSX-NAG CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -frerun-loop-opt -DMATH_ASM_INLINE
+#MACOSX-NAG FORTRAN=$(F90)
+#MACOSX-NAG LOADER=$(LD)
+#MACOSX-NAG LOADOPTS=
+#MACOSX-NAG CDEFS=-DAdd_
+
+######################################################
+# Intel ifort version 8.1 for Linux
+######################################################
+
+#INTEL-F95-V8 # flag for architecture:
+#INTEL-F95-V8 ARCH=ifc
+#INTEL-F95-V8 
+#INTEL-F95-V8 # code conversion call
+#INTEL-F95-V8 CONVERT=2ifc.pl $<
+#INTEL-F95-V8 INTELLIBDIR=-L/opt/intel/mkl/8.0/lib/32 -L/opt/intel/mkl70/lib/32 -L/usr/local/hssoft/intel/mkl/lib/32 \
+#INTEL-F95-V8  -L/opt/intel8-20050131/mkl72/lib/32 -L/opt/pbs/lib
+#INTEL-F95-V8 LAPACK= $(INTELLIBDIR) -lmkl_lapack -lmkl -lpthread -lguide
+#INTEL-F95-V8 
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # General Flags:
+#INTEL-F95-V8 # (may need to adapt library names for Lapack and blas)
+#INTEL-F95-V8 #
+#INTEL-F95-V8 LFLAGS=  \
+#INTEL-F95-V8  $(INTELLIBDIR) -lmkl_lapack -lmkl -lvml -ldl  \
+#INTEL-F95-V8  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V8  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V8  -lunwind -Bdynamic -lc -lF90 -lstdc++
+#INTEL-F95-V8 FLAGS2=
+#INTEL-F95-V8 CFLAGS=-ip -DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#INTEL-F95-V8  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -unroll \
+#INTEL-F95-V8  CPUOPTS
+#INTEL-F95-V8 
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # Flags for optimization:
+#INTEL-F95-V8 #  is replaced by build with machine type options
+#INTEL-F95-V8 # 
+#INTEL-F95-V8 FFLAGS= -O3 -ftz -ip -save CPUOPTS \
+#INTEL-F95-V8 -IPF_fma -IPF_fltacc -stack_temps  -fpconstant
+#INTEL-F95-V8 DFLAGS= -c -ip -O0 -save  -fpconstant
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # Flags for debugging::
+#INTEL-F95-V8 #
+#INTEL-F95-V8 #FFLAGS= -g -CA -CB -CS -CV -O0 -save -stack_temps 
+#INTEL-F95-V8 #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#INTEL-F95-V8 #
+#INTEL-F95-V8 BENCHFLAGS= $(FFLAGS)
+#INTEL-F95-V8 
+#INTEL-F95-V8 CC=icc
+#INTEL-F95-V8 F77=ifort
+#INTEL-F95-V8 F90=ifort
+#INTEL-F95-V8 F95=ifort
+#INTEL-F95-V8 LD=ifort
+#INTEL-F95-V8 #LD=icpc -v
+#INTEL-F95-V8 
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # Flags for QD package:
+#INTEL-F95-V8 #
+#INTEL-F95-V8 CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8 C_QD_OPTS= 
+#INTEL-F95-V8 CC_QD=icpc
+#INTEL-F95-V8 CC_FLAGS= -O3 -ip -mp CPUOPTS
+#INTEL-F95-V8 AR=ar
+#INTEL-F95-V8 AR_FLAGS=-crv
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # Flags for QD package:
+#INTEL-F95-V8 #
+#INTEL-F95-V8 #CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8 #C_QD_OPTS= 
+#INTEL-F95-V8 #CC_QD=g++3
+#INTEL-F95-V8 #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#INTEL-F95-V8 #AR=ar
+#INTEL-F95-V8 #AR_FLAGS=-crv
+#INTEL-F95-V8 #
+#INTEL-F95-V8 # Flags for SuperLU package:
+#INTEL-F95-V8 #
+#INTEL-F95-V8 ARCH_SLU=ar
+#INTEL-F95-V8 ARCHFLAGS_SLU=-crv
+#INTEL-F95-V8 CC_SLU=icc
+#INTEL-F95-V8 CFLAGS_SLU= -O3 -ip -unroll CPUOPTS
+#INTEL-F95-V8 FORTRAN=$(F90)
+#INTEL-F95-V8 LOADER=$(LD)
+#INTEL-F95-V8 LOADOPTS=
+#INTEL-F95-V8 CDEFS=-DAdd_
+#INTEL-F95-V8 
+
+######################################################
+# Intel ifort version 8.1 for Linux, SMP
+######################################################
+
+#INTEL-F95-V8-SMP # flag for architecture:
+#INTEL-F95-V8-SMP ARCH=ifc
+#INTEL-F95-V8-SMP 
+#INTEL-F95-V8-SMP # code conversion call
+#INTEL-F95-V8-SMP CONVERT=2ifc.pl $<
+#INTEL-F95-V8-SMP INTELLIBDIR=-L/opt/intel/mkl70/lib/32 -L/usr/local/hssoft/intel/mkl/lib/32
+#INTEL-F95-V8-SMP 
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # General Flags:
+#INTEL-F95-V8-SMP # (may need to adapt library names for Lapack and blas)
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP LAPACK= $(INTELLIBDIR) -lmkl_lapack -lmkl  -lpthread -lguide
+#INTEL-F95-V8-SMP LFLAGS=   \
+#INTEL-F95-V8-SMP  $(INTELLIBDIR) -lmkl_lapack -lmkl -lvml -ldl  \
+#INTEL-F95-V8-SMP  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V8-SMP  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V8-SMP  -lunwind -Bdynamic -lc -lF90 -lstdc++
+#INTEL-F95-V8-SMP FLAGS2=
+#INTEL-F95-V8-SMP CFLAGS=-ip -DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#INTEL-F95-V8-SMP  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -unroll \
+#INTEL-F95-V8-SMP  CPUOPTS
+#INTEL-F95-V8-SMP 
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # Flags for optimization:
+#INTEL-F95-V8-SMP #  is replaced by build with machine type options
+#INTEL-F95-V8-SMP # 
+#INTEL-F95-V8-SMP FFLAGS= -O3 -ftz -ip -save CPUOPTS \
+#INTEL-F95-V8-SMP -IPF_fma -IPF_fltacc -stack_temps -openmp  -fpconstant
+#INTEL-F95-V8-SMP DFLAGS= -c -ip -O0 -save -openmp  -fpconstant
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # Flags for debugging::
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP #FFLAGS= -g -CA -CB -CS -CV -O0 -save -stack_temps 
+#INTEL-F95-V8-SMP #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP BENCHFLAGS= $(FFLAGS)
+#INTEL-F95-V8-SMP 
+#INTEL-F95-V8-SMP CC=icc
+#INTEL-F95-V8-SMP F77=ifort
+#INTEL-F95-V8-SMP F90=ifort
+#INTEL-F95-V8-SMP F95=ifort
+#INTEL-F95-V8-SMP LD=ifort
+#INTEL-F95-V8-SMP #LD=icpc -v
+#INTEL-F95-V8-SMP 
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # Flags for QD package:
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8-SMP C_QD_OPTS= 
+#INTEL-F95-V8-SMP CC_QD=icpc
+#INTEL-F95-V8-SMP CC_FLAGS= -O3 -ip -mp CPUOPTS
+#INTEL-F95-V8-SMP AR=ar
+#INTEL-F95-V8-SMP AR_FLAGS=-crv
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # Flags for QD package:
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP #CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8-SMP #C_QD_OPTS= 
+#INTEL-F95-V8-SMP #CC_QD=g++3
+#INTEL-F95-V8-SMP #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#INTEL-F95-V8-SMP #AR=ar
+#INTEL-F95-V8-SMP #AR_FLAGS=-crv
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP # Flags for SuperLU package:
+#INTEL-F95-V8-SMP #
+#INTEL-F95-V8-SMP ARCH_SLU=ar
+#INTEL-F95-V8-SMP ARCHFLAGS_SLU=-crv
+#INTEL-F95-V8-SMP CC_SLU=icc
+#INTEL-F95-V8-SMP CFLAGS_SLU= -O3 -ip -unroll CPUOPTS
+#INTEL-F95-V8-SMP FORTRAN=$(F90)
+#INTEL-F95-V8-SMP LOADER=$(LD)
+#INTEL-F95-V8-SMP LOADOPTS=
+#INTEL-F95-V8-SMP CDEFS=-DAdd_
+#INTEL-F95-V8-SMP 
+
+######################################################
+# Intel ifort version 8.1 for Linux, MPI
+######################################################
+
+#INTEL-F95-V8-MPI # flag for architecture:
+#INTEL-F95-V8-MPI ARCH=ifc-mpi
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI # code conversion call
+#INTEL-F95-V8-MPI CONVERT=2ifc-mpi.pl $<
+#INTEL-F95-V8-MPI INTELLIBDIR=-L/opt/intel/mkl70/lib/32 -L/usr/local/hssoft/intel/mkl/lib/32
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # General Flags:
+#INTEL-F95-V8-MPI # (may need to adapt library names for Lapack and blas)
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI LAPACK= $(INTELLIBDIR) -lmkl_lapack -lmkl  -lpthread -lguide
+#INTEL-F95-V8-MPI LFLAGS=  \
+#INTEL-F95-V8-MPI  $(INTELLIBDIR) -lmkl_lapack -lmkl -lvml -ldl  \
+#INTEL-F95-V8-MPI  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V8-MPI  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V8-MPI  -lunwind -Bdynamic -lc -lF90 -lstdc++
+#INTEL-F95-V8-MPI FLAGS2=
+#INTEL-F95-V8-MPI CFLAGS=-ip -DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#INTEL-F95-V8-MPI  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -unroll \
+#INTEL-F95-V8-MPI  CPUOPTS
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for optimization:
+#INTEL-F95-V8-MPI #  is replaced by build with machine type options
+#INTEL-F95-V8-MPI # 
+#INTEL-F95-V8-MPI FFLAGS= -quiet -O3 -ftz -ip -save CPUOPTS \
+#INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps  -fpconstant
+#INTEL-F95-V8-MPI DFLAGS= -c -ip -O0 -quiet -save  -fpconstant
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for debugging::
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI #FFLAGS= -g -CA -CB -CS -CV -O0 -save -stack_temps 
+#INTEL-F95-V8-MPI #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI BENCHFLAGS= $(FFLAGS)
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI CC=icc
+#INTEL-F95-V8-MPI F77=mpif77
+#INTEL-F95-V8-MPI F90=mpif77
+#INTEL-F95-V8-MPI F95=mpif77
+#INTEL-F95-V8-MPI LD=mpif77
+#INTEL-F95-V8-MPI #LD=icpc -v
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for QD package:
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8-MPI C_QD_OPTS= 
+#INTEL-F95-V8-MPI CC_QD=icpc
+#INTEL-F95-V8-MPI CC_FLAGS= -O3 -ip -mp CPUOPTS
+#INTEL-F95-V8-MPI AR=ar
+#INTEL-F95-V8-MPI AR_FLAGS=-crv
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for QD package:
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI #CC_OPTS=-DADD_UNDERSCORE
+#INTEL-F95-V8-MPI #C_QD_OPTS= 
+#INTEL-F95-V8-MPI #CC_QD=g++3
+#INTEL-F95-V8-MPI #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#INTEL-F95-V8-MPI #AR=ar
+#INTEL-F95-V8-MPI #AR_FLAGS=-crv
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for SuperLU package:
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI ARCH_SLU=ar
+#INTEL-F95-V8-MPI ARCHFLAGS_SLU=-crv
+#INTEL-F95-V8-MPI CC_SLU=icc 
+#INTEL-F95-V8-MPI CFLAGS_SLU= -O3 -ip -unroll CPUOPTS
+#INTEL-F95-V8-MPI FORTRAN=$(F90)
+#INTEL-F95-V8-MPI LOADER=$(LD)
+#INTEL-F95-V8-MPI LOADOPTS=
+#INTEL-F95-V8-MPI CDEFS=-DAdd_
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI # Flags for SuperLU_DIST package:
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI ARCH_SLU_DIST=ar
+#INTEL-F95-V8-MPI ARCHFLAGS_SLU_DIST=-crv
+#INTEL-F95-V8-MPI CC_SLU_DIST=icc
+#INTEL-F95-V8-MPI CFLAGS_SLU_DIST= -I/usr/local/include $(C_FLAGS_SLU) \
+#INTEL-F95-V8-MPI  -D_SP -DDEBUGlevel=0 -DPRNTlevel=0
+#INTEL-F95-V8-MPI FORTRAN=$(F90)
+#INTEL-F95-V8-MPI 
+#INTEL-F95-V8-MPI FFLAGS_SLU_DIST= -I/usr/local/include -O3 -ftz -ip -save CPUOPTS \
+#INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#INTEL-F95-V8-MPI F95FLAGS_SLU_DIST= -I/usr/local/include -O3 -ftz -ip -save CPUOPTS \
+#INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#INTEL-F95-V8-MPI #
+#INTEL-F95-V8-MPI LOADER=$(LD)
+#INTEL-F95-V8-MPI LOADOPTS= \
+#INTEL-F95-V8-MPI  $(INTELLIBDIR) -lmkl_lapack -lvml -ldl  \
+#INTEL-F95-V8-MPI  -lpthread -lguide -Bstatic -lsvml -limf -Bdynamic -lm \
+#INTEL-F95-V8-MPI  -Bstatic -lirc -Bstatic -lcprts -Bdynamic -lcxa -Bstatic \
+#INTEL-F95-V8-MPI  -lunwind -Bdynamic -lc -lF90 -lstdc++
+#INTEL-F95-V8-MPI CDEFS=-DAdd_ -DFNAME=2
+#INTEL-F95-V8-MPI BLASDEF_SLU_DIST= -DUSE_VENDOR_BLAS
+#INTEL-F95-V8-MPI BLASLIB_SLU_DIST= -L/opt/intel/mkl70/lib/32 -lmkl_lapack -lmkl -lvml -lguide 
+#INTEL-F95-V8-MPI NOOPTS_SLU_DIST=
+#INTEL-F95-V8-MPI 
+
+######################################################
+# Intel compilers version 8.1 for Itanium2/Linux
+# tested on Altix system
+######################################################
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 # flag for architecture:
+#ITANIC-INTEL-F95-V8 ARCH=efc
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 # code conversion call
+#ITANIC-INTEL-F95-V8 CONVERT=2efc.pl $<
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # General Flags:
+#ITANIC-INTEL-F95-V8 # (may need to adapt library names for Lapack and blas)
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 LAPACK= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide
+#ITANIC-INTEL-F95-V8 LFLAGS= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide \
+#ITANIC-INTEL-F95-V8  -Qy -L/opt/intel_cc_80/lib -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3 \
+#ITANIC-INTEL-F95-V8  -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/../../.. -L/usr/lib \
+#ITANIC-INTEL-F95-V8   -Bstatic -limf -Bdynamic -lm -Bdynamic -lstdc++ -Bdynamic -lipr \
+#ITANIC-INTEL-F95-V8   -Bdynamic -lgcc_s -Bstatic -lgcc -Bdynamic -lcxaguard -Bstatic \
+#ITANIC-INTEL-F95-V8   -lirc -Bdynamic -lc -Bdynamic -lgcc_s -Bstatic -lgcc -Bstatic -lirc_s \
+#ITANIC-INTEL-F95-V8   /usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/crtend.o /usr/lib/crtn.o
+#ITANIC-INTEL-F95-V8 FLAGS2=
+#ITANIC-INTEL-F95-V8 CFLAGS=-DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#ITANIC-INTEL-F95-V8  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for optimization:
+#ITANIC-INTEL-F95-V8 #  is replaced by build with machine type options
+#ITANIC-INTEL-F95-V8 # 
+#ITANIC-INTEL-F95-V8 FFLAGS= -O1 -ftz -fpe1 -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8 -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8 DFLAGS= -c -ip -O0 -ftz -fpe1 -save -fpconstant
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for debugging::
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 #FFLAGS= -g -CA -CB -CS -CV -O0 -C90 -save -stack_temps 
+#ITANIC-INTEL-F95-V8 #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 BENCHFLAGS= $(FFLAGS)
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 CC=icc
+#ITANIC-INTEL-F95-V8 F77=ifort
+#ITANIC-INTEL-F95-V8 F90=ifort
+#ITANIC-INTEL-F95-V8 F95=ifort
+#ITANIC-INTEL-F95-V8 LD=ifort
+#ITANIC-INTEL-F95-V8 #LD=icpc -v
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for QD package:
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 CC_OPTS=-DADD_UNDERSCORE  -DHAS_FMA
+#ITANIC-INTEL-F95-V8 C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8 CC_QD=icpc
+#ITANIC-INTEL-F95-V8 CC_FLAGS=-O3 -ip -ftz -IPF_fma -IPF_fp_relaxed 
+#ITANIC-INTEL-F95-V8 AR=ar
+#ITANIC-INTEL-F95-V8 AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for QD package:
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 #CC_OPTS=-DADD_UNDERSCORE
+#ITANIC-INTEL-F95-V8 #C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8 #CC_QD=g++3
+#ITANIC-INTEL-F95-V8 #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#ITANIC-INTEL-F95-V8 #AR=ar
+#ITANIC-INTEL-F95-V8 #AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for SuperLU package:
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 ARCH_SLU=ar
+#ITANIC-INTEL-F95-V8 ARCHFLAGS_SLU=-crv
+#ITANIC-INTEL-F95-V8 CC_SLU=icc
+#ITANIC-INTEL-F95-V8 CFLAGS_SLU= -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8 FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8 LOADER=$(LD)
+#ITANIC-INTEL-F95-V8 LOADOPTS=
+#ITANIC-INTEL-F95-V8 CDEFS=-DAdd_
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 # Flags for SuperLU_DIST package:
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 ARCH_SLU_DIST=ar
+#ITANIC-INTEL-F95-V8 ARCHFLAGS_SLU_DIST=-crv
+#ITANIC-INTEL-F95-V8 CC_SLU_DIST=icc
+#ITANIC-INTEL-F95-V8 CFLAGS_SLU_DIST=$(C_FLAGS_SLU) \
+#ITANIC-INTEL-F95-V8  -D_SP -DDEBUGlevel=0 -DPRNTlevel=0
+#ITANIC-INTEL-F95-V8 FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8 
+#ITANIC-INTEL-F95-V8 FFLAGS_SLU_DIST=  -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8 -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8 F95FLAGS_SLU_DIST=  -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8 -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8 #
+#ITANIC-INTEL-F95-V8 LOADER=$(LD)
+#ITANIC-INTEL-F95-V8 LOADOPTS=
+#ITANIC-INTEL-F95-V8 CDEFS=-DAdd_ -DFNAME=2
+#ITANIC-INTEL-F95-V8 BLASDEF_SLU_DIST= -DUSE_VENDOR_BLAS
+#ITANIC-INTEL-F95-V8 BLASLIB_SLU_DIST= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide 
+#ITANIC-INTEL-F95-V8 NOOPTS_SLU_DIST=
+#ITANIC-INTEL-F95-V8 
+
+######################################################
+# Intel compilers version 8.1 for Itanium2/Linux openMP
+# tested on Altix system
+######################################################
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP # flag for architecture:
+#ITANIC-INTEL-F95-V8-SMP ARCH=efc
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP # code conversion call
+#ITANIC-INTEL-F95-V8-SMP CONVERT=2efc.pl $<
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # General Flags:
+#ITANIC-INTEL-F95-V8-SMP # (may need to adapt library names for Lapack and blas)
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP LAPACK= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl
+#ITANIC-INTEL-F95-V8-SMP LFLAGS= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide \
+#ITANIC-INTEL-F95-V8-SMP  -Qy -L/opt/intel_cc_80/lib -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3 \
+#ITANIC-INTEL-F95-V8-SMP  -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/../../.. -L/usr/lib \
+#ITANIC-INTEL-F95-V8-SMP   -Bstatic -limf -Bdynamic -lm -Bdynamic -lstdc++ -Bdynamic -lipr \
+#ITANIC-INTEL-F95-V8-SMP   -Bdynamic -lgcc_s -Bstatic -lgcc -Bdynamic -lcxaguard -Bstatic \
+#ITANIC-INTEL-F95-V8-SMP   -lirc -Bdynamic -lc -Bdynamic -lgcc_s -Bstatic -lgcc -Bstatic -lirc_s \
+#ITANIC-INTEL-F95-V8-SMP   /usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/crtend.o /usr/lib/crtn.o
+#ITANIC-INTEL-F95-V8-SMP FLAGS2=
+#ITANIC-INTEL-F95-V8-SMP CFLAGS=-DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#ITANIC-INTEL-F95-V8-SMP  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for optimization:
+#ITANIC-INTEL-F95-V8-SMP #  is replaced by build with machine type options
+#ITANIC-INTEL-F95-V8-SMP # 
+#ITANIC-INTEL-F95-V8-SMP FFLAGS= -O1 -ftz -fpe1 -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-SMP -IPF_fma -IPF_fltacc -stack_temps -openmp -fpconstant
+#ITANIC-INTEL-F95-V8-SMP DFLAGS= -c -ip -O0 -ftz -fpe1 -save -openmp -fpconstant
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for debugging::
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP #FFLAGS= -g -CA -CB -CS -CV -O0 -C90 -save -stack_temps 
+#ITANIC-INTEL-F95-V8-SMP #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP BENCHFLAGS= $(FFLAGS)
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP CC=icc
+#ITANIC-INTEL-F95-V8-SMP F77=ifort
+#ITANIC-INTEL-F95-V8-SMP F90=ifort
+#ITANIC-INTEL-F95-V8-SMP F95=ifort
+#ITANIC-INTEL-F95-V8-SMP LD=ifort
+#ITANIC-INTEL-F95-V8-SMP #LD=icpc -v
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for QD package:
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP CC_OPTS=-DADD_UNDERSCORE  -DHAS_FMA
+#ITANIC-INTEL-F95-V8-SMP C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8-SMP CC_QD=icpc
+#ITANIC-INTEL-F95-V8-SMP CC_FLAGS=-O3 -ip -ftz -IPF_fma -IPF_fp_relaxed 
+#ITANIC-INTEL-F95-V8-SMP AR=ar
+#ITANIC-INTEL-F95-V8-SMP AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for QD package:
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP #CC_OPTS=-DADD_UNDERSCORE
+#ITANIC-INTEL-F95-V8-SMP #C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8-SMP #CC_QD=g++3
+#ITANIC-INTEL-F95-V8-SMP #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#ITANIC-INTEL-F95-V8-SMP #AR=ar
+#ITANIC-INTEL-F95-V8-SMP #AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for SuperLU package:
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP ARCH_SLU=ar
+#ITANIC-INTEL-F95-V8-SMP ARCHFLAGS_SLU=-crv
+#ITANIC-INTEL-F95-V8-SMP CC_SLU=icc
+#ITANIC-INTEL-F95-V8-SMP CFLAGS_SLU= -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8-SMP FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8-SMP LOADER=$(LD)
+#ITANIC-INTEL-F95-V8-SMP LOADOPTS=
+#ITANIC-INTEL-F95-V8-SMP CDEFS=-DAdd_
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP # Flags for SuperLU_DIST package:
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP ARCH_SLU_DIST=ar
+#ITANIC-INTEL-F95-V8-SMP ARCHFLAGS_SLU_DIST=-crv
+#ITANIC-INTEL-F95-V8-SMP CC_SLU_DIST=icc
+#ITANIC-INTEL-F95-V8-SMP CFLAGS_SLU_DIST=$(C_FLAGS_SLU) \
+#ITANIC-INTEL-F95-V8-SMP  -D_SP -DDEBUGlevel=0 -DPRNTlevel=0
+#ITANIC-INTEL-F95-V8-SMP FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8-SMP 
+#ITANIC-INTEL-F95-V8-SMP FFLAGS_SLU_DIST=  -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-SMP -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8-SMP F95FLAGS_SLU_DIST=  -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-SMP -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8-SMP #
+#ITANIC-INTEL-F95-V8-SMP LOADER=$(LD)
+#ITANIC-INTEL-F95-V8-SMP LOADOPTS=
+#ITANIC-INTEL-F95-V8-SMP CDEFS=-DAdd_ -DFNAME=2
+#ITANIC-INTEL-F95-V8-SMP BLASDEF_SLU_DIST= -DUSE_VENDOR_BLAS
+#ITANIC-INTEL-F95-V8-SMP BLASLIB_SLU_DIST= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide 
+#ITANIC-INTEL-F95-V8-SMP NOOPTS_SLU_DIST=
+#ITANIC-INTEL-F95-V8-SMP 
+
+######################################################
+# Intel compilers version 8.1 for Itanium2/Linux
+# tested on Altix system, MPI version
+######################################################
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI # flag for architecture:
+#ITANIC-INTEL-F95-V8-MPI ARCH=efc-mpi
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI # code conversion call
+#ITANIC-INTEL-F95-V8-MPI CONVERT=2efc-mpi.pl $<
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # General Flags:
+#ITANIC-INTEL-F95-V8-MPI # (may need to adapt library names for Lapack and blas)
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI LAPACK= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide -lmpi
+#ITANIC-INTEL-F95-V8-MPI LFLAGS= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide \
+#ITANIC-INTEL-F95-V8-MPI  -Qy -L/opt/intel_cc_80/lib -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3 \
+#ITANIC-INTEL-F95-V8-MPI  -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/../../.. -L/usr/lib \
+#ITANIC-INTEL-F95-V8-MPI   -Bstatic -limf -Bdynamic -lm -Bdynamic -lstdc++ -Bdynamic  \
+#ITANIC-INTEL-F95-V8-MPI   -Bdynamic -lgcc_s -Bstatic -Bdynamic -Bstatic \
+#ITANIC-INTEL-F95-V8-MPI   -lirc -Bdynamic -lc -Bdynamic -lgcc_s -Bstatic -Bstatic -lirc_s \
+#ITANIC-INTEL-F95-V8-MPI   /usr/lib/crtn.o -Bdynamic  -L/opt/mpt-1.11.1/lib  -lmpi
+#ITANIC-INTEL-F95-V8-MPI FLAGS2=
+#ITANIC-INTEL-F95-V8-MPI CFLAGS=-DLITTLE_ENDIAN -DGOODF90 -DSUN \
+#ITANIC-INTEL-F95-V8-MPI  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for optimization:
+#ITANIC-INTEL-F95-V8-MPI #  is replaced by build with machine type options
+#ITANIC-INTEL-F95-V8-MPI # 
+#ITANIC-INTEL-F95-V8-MPI FFLAGS= -O1 -ftz -fpe1 -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8-MPI DFLAGS= -c -ip -ftz -fpe1 -O0 -save -fpconstant
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for debugging::
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI #FFLAGS= -g -CA -CB -CS -CV -O0 -C90 -save -stack_temps 
+#ITANIC-INTEL-F95-V8-MPI #DFLAGS= -c -g -C -O0 -C90 -v -save -stack_temps
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI BENCHFLAGS= $(FFLAGS)
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI CC=icc
+#ITANIC-INTEL-F95-V8-MPI F77=ifort
+#ITANIC-INTEL-F95-V8-MPI F90=ifort
+#ITANIC-INTEL-F95-V8-MPI F95=ifort
+#ITANIC-INTEL-F95-V8-MPI LD=ifort
+#ITANIC-INTEL-F95-V8-MPI #LD=icpc -v
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for QD package:
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI CC_OPTS=-DADD_UNDERSCORE  -DHAS_FMA
+#ITANIC-INTEL-F95-V8-MPI C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8-MPI CC_QD=icpc
+#ITANIC-INTEL-F95-V8-MPI CC_FLAGS=-O3 -ip -ftz -IPF_fma -IPF_fp_relaxed 
+#ITANIC-INTEL-F95-V8-MPI AR=ar
+#ITANIC-INTEL-F95-V8-MPI AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for QD package:
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI #CC_OPTS=-DADD_UNDERSCORE
+#ITANIC-INTEL-F95-V8-MPI #C_QD_OPTS= 
+#ITANIC-INTEL-F95-V8-MPI #CC_QD=g++3
+#ITANIC-INTEL-F95-V8-MPI #CC_FLAGS=-O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables -freduce-all-givs -frerun-loop-opt
+#ITANIC-INTEL-F95-V8-MPI #AR=ar
+#ITANIC-INTEL-F95-V8-MPI #AR_FLAGS=-crv
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for SuperLU package:
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI ARCH_SLU=ar
+#ITANIC-INTEL-F95-V8-MPI ARCHFLAGS_SLU=-crv
+#ITANIC-INTEL-F95-V8-MPI CC_SLU=icc
+#ITANIC-INTEL-F95-V8-MPI CFLAGS_SLU= -O3 -ip -ftz -IPF_fma -IPF_fp_relaxed
+#ITANIC-INTEL-F95-V8-MPI FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8-MPI LOADER=$(LD)
+#ITANIC-INTEL-F95-V8-MPI LOADOPTS=
+#ITANIC-INTEL-F95-V8-MPI CDEFS=-DAdd_
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI # Flags for SuperLU_DIST package:
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI ARCH_SLU_DIST=ar
+#ITANIC-INTEL-F95-V8-MPI ARCHFLAGS_SLU_DIST=-crv
+#ITANIC-INTEL-F95-V8-MPI CC_SLU_DIST=icc
+#ITANIC-INTEL-F95-V8-MPI CFLAGS_SLU_DIST=$(C_FLAGS_SLU) \
+#ITANIC-INTEL-F95-V8-MPI  -D_SP -DDEBUGlevel=0 -DPRNTlevel=0
+#ITANIC-INTEL-F95-V8-MPI FORTRAN=$(F90)
+#ITANIC-INTEL-F95-V8-MPI 
+#ITANIC-INTEL-F95-V8-MPI FFLAGS_SLU_DIST= -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8-MPI F95FLAGS_SLU_DIST= -O3 -ftz -ip -save -tpp2 \
+#ITANIC-INTEL-F95-V8-MPI -IPF_fma -IPF_fltacc -stack_temps -fpconstant
+#ITANIC-INTEL-F95-V8-MPI #
+#ITANIC-INTEL-F95-V8-MPI LOADER=$(LD)
+#ITANIC-INTEL-F95-V8-MPI LOADOPTS=-Qy -L/opt/intel_cc_80/lib \
+#ITANIC-INTEL-F95-V8-MPI  -Qy -L/opt/intel_cc_80/lib -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3 \
+#ITANIC-INTEL-F95-V8-MPI  -L/usr/lib/gcc-lib/ia64-redhat-linux/3.2.3/../../.. -L/usr/lib \
+#ITANIC-INTEL-F95-V8-MPI   -Bstatic -limf -Bdynamic -lm -Bdynamic -lstdc++ -Bdynamic  \
+#ITANIC-INTEL-F95-V8-MPI   -Bdynamic -lgcc_s -Bstatic -Bdynamic -Bstatic \
+#ITANIC-INTEL-F95-V8-MPI   -lirc -Bdynamic -lc -Bdynamic -lgcc_s -Bstatic -Bstatic -lirc_s \
+#ITANIC-INTEL-F95-V8-MPI   /usr/lib/crtn.o -Bdynamic  -L/opt/mpt-1.11.1/lib  -lmpi
+#ITANIC-INTEL-F95-V8-MPI CDEFS=-DAdd_ -DFNAME=2
+#ITANIC-INTEL-F95-V8-MPI BLASDEF_SLU_DIST= -DUSE_VENDOR_BLAS
+#ITANIC-INTEL-F95-V8-MPI BLASLIB_SLU_DIST= -L/opt/intel/mkl70/lib/64 -lmkl_lapack -lmkl -lvml -lguide 
+#ITANIC-INTEL-F95-V8-MPI NOOPTS_SLU_DIST=
+#ITANIC-INTEL-F95-V8-MPI 
+######################################################
+# g95 on Mac OS X using Accelerate framework on 10.4
+######################################################
+#G95-OSX # flag for architecture:
+#G95-OSX ARCH=g95
+#G95-OSX #
+#G95-OSX # code conversion call
+#G95-OSX CONVERT=2g95.pl $<
+#G95-OSX #
+#G95-OSX #
+#G95-OSX # General Flags:
+#G95-OSX #
+#G95-OSX LAPACK=-framework Accelerate 
+#G95-OSX LFLAGS= -L/usr/local/lib/gcc-lib/powerpc-apple-darwin8.4.0/4.0.1  \
+#G95-OSX  -lstdc++.6 -lSystemStubs
+#G95-OSX
+#G95-OSX 
+#G95-OSX FLAGS2=
+#G95-OSX 
+#G95-OSX #
+#G95-OSX # Flags for optimization:
+#G95-OSX #
+#G95-OSX FFLAGS= -O5 -fstatic -ffixed-form -Wall -fno-second-underscore
+#G95-OSX DFLAGS= -c -fstatic  -ffixed-form  -Wall -fno-second-underscore
+#G95-OSX BENCHFLAGS=$(FFLAGS)
+#G95-OSX #
+#G95-OSX # Flags for debugging::
+#G95-OSX #
+#G95-OSX #FFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-OSX #DFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-OSX 
+#G95-OSX F77=g95 CPUOPTS
+#G95-OSX F90=g95 CPUOPTS
+#G95-OSX F95=g95 CPUOPTS
+#G95-OSX LD=g95 CPUOPTS
+#G95-OSX CC=gcc GCC_CPUOPTS
+#G95-OSX 
+#G95-OSX CFLAGS= -framework Accelerate -c -DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#G95-OSX #
+#G95-OSX #
+#G95-OSX #
+#G95-OSX # Flags for QD package:
+#G95-OSX #
+#G95-OSX CC_OPTS=-DHAS_FMA
+#G95-OSX CC_OPTS=
+#G95-OSX C_QD_OPTS=-DADD_UNDERSCORE
+#G95-OSX CC_QD=CC CPUOPTS
+#G95-OSX CC_FLAGS=-O4
+#G95-OSX AR=ar
+#G95-OSX AR_FLAGS=-crv
+#G95-OSX #
+#G95-OSX # Flags for SuperLU package:
+#G95-OSX #
+#G95-OSX ARCH_SLU=ar
+#G95-OSX ARCHFLAGS_SLU=-crv
+#G95-OSX CC_SLU=cc CPUOPTS
+#G95-OSX CFLAGS_SLU= -DOSX -O4 -mcpu=7450 -mdynamic-no-pic -fstrict-aliasing -fno-omit-frame-pointer -funroll-all-loops -frerun-loop-opt -DMATH_ASM_INLINE
+#G95-OSX FORTRAN=$(F90)
+#G95-OSX LOADER=$(LD)
+#G95-OSX LOADOPTS=
+#G95-OSX CDEFS=-DAdd_
+
+######################################################
+# g95 on Linux
+######################################################
+#G95-Linux # flag for architecture:
+#G95-Linux ARCH=g95-linux
+#G95-Linux #
+#G95-Linux # code conversion call
+#G95-Linux CONVERT=2g95.pl $<
+#G95-Linux #
+#G95-Linux #
+#G95-Linux # General Flags:
+#G95-Linux #
+#G95-Linux LAPACK= -llapack -lblas -lm
+#G95-Linux LFLAGS= -L/usr/local/lib/gcc-lib/i686-pc-linux-gnu/4.0.1 -lf95  
+#G95-Linux
+#G95-Linux 
+#G95-Linux FLAGS2=
+#G95-Linux 
+#G95-Linux #
+#G95-Linux # Flags for optimization:
+#G95-Linux #
+#G95-Linux FFLAGS= -O5 -fstatic -ffixed-form -Wall -fno-second-underscore
+#G95-Linux DFLAGS= -c -fstatic  -ffixed-form  -Wall -fno-second-underscore
+#G95-Linux BENCHFLAGS=$(FFLAGS)
+#G95-Linux #
+#G95-Linux # Flags for debugging::
+#G95-Linux #
+#G95-Linux #FFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-Linux #DFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-Linux 
+#G95-Linux F77=g95 CPUOPTS
+#G95-Linux F90=g95 CPUOPTS
+#G95-Linux F95=g95 CPUOPTS
+#G95-Linux LD=g++ CPUOPTS
+#G95-Linux CC=gcc CPUOPTS
+#G95-Linux 
+#G95-Linux CFLAGS= -c -DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#G95-Linux #
+#G95-Linux #
+#G95-Linux #
+#G95-Linux # Flags for QD package:
+#G95-Linux #
+#G95-Linux CC_OPTS=
+#G95-Linux CC_OPTS=
+#G95-Linux C_QD_OPTS=-DADD_UNDERSCORE
+#G95-Linux CC_QD=g++ CPUOPTS
+#G95-Linux CC_FLAGS=-O4
+#G95-Linux AR=ar
+#G95-Linux AR_FLAGS=-crv
+#G95-Linux #
+#G95-Linux # Flags for SuperLU package:
+#G95-Linux #
+#G95-Linux ARCH_SLU=ar
+#G95-Linux ARCHFLAGS_SLU=-crv
+#G95-Linux CC_SLU=cc CPUOPTS
+#G95-Linux CFLAGS_SLU= -O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables  -freduce-all-givs -frerun-loop-opt
+#G95-Linux FORTRAN=$(F90)
+#G95-Linux LOADER=$(LD)
+#G95-Linux LOADOPTS=
+#G95-Linux CDEFS=-DAdd_
+
+######################################################
+# g95 on Windoze XP with cygwin. untested, too slow
+######################################################
+#G95-XP # flag for architecture:
+#G95-XP ARCH=g95-linux
+#G95-XP #
+#G95-XP # code conversion call
+#G95-XP CONVERT=2g95.pl $<
+#G95-XP #
+#G95-XP #
+#G95-XP # General Flags:
+#G95-XP #
+#G95-XP LAPACK=-lblas -llapack
+#G95-XP LFLAGS= -L/usr/lib/gcc/i686-pc-cygwin/3.4.4 $(LAPACK)  -lstdc++
+#G95-XP
+#G95-XP 
+#G95-XP FLAGS2=
+#G95-XP 
+#G95-XP #
+#G95-XP # Flags for optimization:
+#G95-XP #
+#G95-XP FFLAGS= -O5 -fstatic -ffixed-form -Wall -fno-second-underscore
+#G95-XP DFLAGS= -c -fstatic  -ffixed-form  -Wall -fno-second-underscore
+#G95-XP BENCHFLAGS=$(FFLAGS)
+#G95-XP #
+#G95-XP # Flags for debugging::
+#G95-XP #
+#G95-XP #FFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-XP #DFLAGS= -g -Wall -fstatic  -ffixed-form -fbounds-check -ftrace=full -fpointer=invalid -fno-second-underscore
+#G95-XP 
+#G95-XP F77=g95 CPUOPTS
+#G95-XP F90=g95 CPUOPTS
+#G95-XP F95=g95 CPUOPTS
+#G95-XP LD=g95 CPUOPTS
+#G95-XP CC=gcc CPUOPTS
+#G95-XP 
+#G95-XP CFLAGS= -c -DSUN -O -DO_LARGEFILE=0 -DGOODF90
+#G95-XP #
+#G95-XP #
+#G95-XP #
+#G95-XP # Flags for QD package:
+#G95-XP #
+#G95-XP CC_OPTS=
+#G95-XP CC_OPTS=
+#G95-XP C_QD_OPTS=-DADD_UNDERSCORE
+#G95-XP CC_QD=CC CPUOPTS
+#G95-XP CC_FLAGS=-O4
+#G95-XP AR=ar
+#G95-XP AR_FLAGS=-crv
+#G95-XP #
+#G95-XP # Flags for SuperLU package:
+#G95-XP #
+#G95-XP ARCH_SLU=ar
+#G95-XP ARCHFLAGS_SLU=-crv
+#G95-XP CC_SLU=cc CPUOPTS
+#G95-XP CFLAGS_SLU= -O6 -fno-omit-frame-pointer -funroll-all-loops -fmove-all-movables  -freduce-all-givs -frerun-loop-opt
+#G95-XP FORTRAN=$(F90)
+#G95-XP LOADER=$(LD)
+#G95-XP LOADOPTS=
+#G95-XP CDEFS=-DAdd_

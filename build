@@ -1,0 +1,1073 @@
+#!/usr/bin/perl -s
+#
+# Time-stamp: <29/03/2006 15:23 baron>
+#
+# NEW DEFAULT BEHAVIOUR : DOES NOT COMPILE ANYMPORE
+# WITHOUT TELLING IT WITH THE -c FLAG
+#
+# Script on top of make to compile and create
+# programs of the phoenix package on different
+# machines/architectures/OS/.....
+# without worrying about the actual you are on
+#
+# --------------------------------------------
+# Version 4.5 by (as & phh & eab) (2003)
+# --------------------------------------------
+# 
+# usage :
+# build -c [-debug] [-u -l -mpi -smp -nag -v8 -D=MASTERDIR -R=RUNLIST ] [FILE] [ARCHITECTURE] 
+# build [-m] [-debug] [-u -l -mpi -smp -nag -v8 -D=MASTERDIR -R=RUNLIST ] [ARCHITECTURE]
+# build -h
+# 
+# FILE is the program to be compiled. 
+# As a result there will be the executable "FILE" 
+# If no FILE is given, make will compile its defaults.
+#
+# ARCHITECTURE is an optional argument which determines the architecture.
+# If not given, build will try to determine the architecture via
+# uname.
+# WARNING : The executable will NOT necessarily run on ARCHITECTURE
+#           (We don't have GNU here ....)
+#	    The executable will only run on the machine compiled on.
+#	    This was meant for different available compilers, 
+#           libraries (MPI,PVM,...) and Makefile configurations
+#
+# MASTERDIR is the reference directory build has to check in.
+#           It overrides $BUILDMASTERDIR
+#
+# Needed files
+#           Makefile.in  -  source for the Makefile
+# Semi-optional files
+#           Compiler.options -  Build will treat it just as Makefile.in.
+#                               Output will be called options.make.
+#                               Only in current directory.
+#                               options.make can be included from the Makefile.
+# Optional files
+#           Subdirs  -  list of subdirectories build has to
+#                       descent into. If not present, don't worry.
+# Remark on the Makefile.in :
+# the compiler dependent parts must be commented by either 
+#	#ARCH 
+# or by
+#	#ARCHITECTURE
+# again, ARCH is the dqs variable, ARCHITECTURE is user-defined.
+# 
+#
+# Flags :
+#
+#  NONE : does nothing, except reporting which files are newer
+#         in either $BUIDLMASTERDIR or specified by the -D flag
+#
+#  -c  compile. After doing everything else it runs make FILE
+#      FILE can be omiited, then it runs make without arguments
+#
+#  -u   updates all modified files in the directory specified
+#       by the enviroment variable BUILDMASTERDIR - if set
+#
+#  -m	produces only the Makefile for the specified architecture
+#	if ARCHITECURE is not specified, build determines the
+#	architecture from uname.
+#	The Makefile will be named "Makefile" 
+#
+#  -h	returns some help output
+#
+#  -l   without the -m flag :
+#       links called FILE.ARCH and FILE.ARCHITECUTRE (if possible)
+#	will be created pointing on FILE
+#       if BUILDDESTDIR is set, the links will go in this directory
+#	with the -m flag :
+#	links called Makefile.ARCH and Makefile.ARCHITECTURE (if possible)
+#	will be created pointing on MAKEFILE
+#
+#  -D=dir Use dir instead of $BUILDMASTERDIR
+#
+#  -R=RUNLIST RUNLIST is a comma seperated string of commands that are
+#             run on each file that are updated. Only used with the -u
+#             flag. Ignored otherwise.
+#             Example : you have your version on a serial machine,
+#                       and want to update on a parallel machine
+#                       which has NFS access to the serial machine, then
+#                       you do :
+#                       build -u -R=mpi-on.pl
+#                       or, if you want more, you do
+#                       build -u -R="mpi-on.pl,alloc-on.pl"
+#
+#  -mpi makes an MPI executable or Makefile
+#
+#  -smp makes an openMP executable or Makefile
+#
+#  -absoft uses the ABSOFT f90 compiler for Linux or Mac's 
+#
+#  -debug activates #FFLAGS and #DFLAGS in options.make for easy debug
+#
+#  -v8 uses the Intel version 8 compilers on linux (if auto-selected)
+#
+# ---------------------------------------------
+#
+# Changes :
+#
+#  better error and output handling, does not produce "empty links"
+#  is capable of default compiling
+#
+#  has little help-facility
+#
+#  uses the enviroment Variable $BUILDMASTERDIR from which
+#  the source files get updated
+#  but only the ACTUAL changed file
+#
+#  supports now the Cray inSan Diego
+#
+#  supports DEC Alpha
+#
+#  supports MPI on a AIX cluster (the one in Cornell)
+#
+#  uses $BUILDMASTERDIR only if -u flag is set
+#
+#  updates now also itself and Makefile.in
+#
+#  uses $BUILDDESTDIR where the links are created to
+#  only for the -l flag
+#
+# 3.0  Additions from Peter (subdir layout)
+#      support of 'Subdir' file
+#      use of subroutines
+# 3.1  Fixed serious bug in subroutine udatefrom
+#      supports Absoft
+# 3.2  Added support of the -D=DIR flag
+# 3.3  Added support for -smp
+# 3.4  Added TOPDIR var into createmakefile (eab)
+# 4.0  Added -R=RUNLIST flag, added -c flag and changed
+#      default behaviour, cleaned the -h output
+# 4.1  fixed a bug in the new default argument handling - thanks eddie
+# 4.2  fixed a bug in the BUILDMASTERDIR/-D handling. Added updating of mk_* shell scripts
+# 4.3  Added CPUOPTS handling and Intel-F95
+# 4.4  Add 64-bit AIX and PWR4 options (eab)
+#
+# ---------------------------------------------
+#
+# Bugs :
+# - tons of.
+#  Be happy if it works ......
+#
+# - only AIX, HPUX, SGI, Cray, DEC Alpha  and LINUX supported. 
+#   MPI on AIX cluster in Cornell
+#   By now, lots of platforms supported !
+#
+# Surprising features :
+# - til now, build will mix up the different .o formats
+#     so : use different directories for different architectures !!
+#
+# ---------------------------------------------
+#####
+
+if ($h) {
+#	system("rm -f .build.help.txt");
+	open(HELPFILE,">.build.help.txt");
+	open(HELP,$0);
+ 	while(<HELP>)	{
+                        if ($_ eq "#####\n") {
+				close(HELPFILE);
+				system("more .build.help.txt");
+				system("rm -f .build.help.txt");
+				exit;
+			}
+			print HELPFILE $_;
+ 			}
+	close(HELP);
+	}
+#print $0;
+
+# -----------------------------
+# say hello to the world ......
+
+print "build V4.3\n";
+print "NEW DEFAULT BEHAVIOUR : DOES NOT COMPILE ANYMPORE\n";
+print "WITHOUT TELLING IT WITH THE -c FLAG\n";
+# -----------------------------
+
+
+#print $ARGV[0];
+#print $ENV{"BUILDMASTERDIR"};
+
+#$runthis="mpi-on.pl";
+if ($R) {
+	@runthis = split /\,/, $R;
+}
+
+#	foreach(@runthis){
+#		print "$_ \n";
+#	}
+#
+#print STDOUT "\n wwwooooaaaa\n ";
+#exit;
+	
+
+if ($D)
+	{$masterdir=$D;}
+elsif ($ENV{"BUILDMASTERDIR"}) 
+	{$masterdir=$ENV{"BUILDMASTERDIR"};}
+else
+	{goto SKIP;}
+#	{$masterdir=/sara/yeti/phxdev;}
+
+$ldir=$ENV{"PWD"};
+$ldir='.';
+#if ($ENV{"BUILDMASTERDIR"} ne $ENV{"PWD"})
+if ($masterdir ne $ENV{"PWD"})
+	{
+	if ($u) {print "build : message : updating the files\n";}
+	else {print "build : warning : The following files are NOT updated :\n";}
+
+####################################
+####
+####   A subroutine which will be needed i a second
+####
+####################################
+
+sub updatefrom {
+	($subdir)=@_;
+        if ($subdir ne '' && substr($subdir,-1,1) ne '/') {$subdir=$subdir.'/'};
+#	print $subdir;
+        opendir(REFDIR,$masterdir."/".$subdir);
+	rewinddir(REFDIR);
+#	until(eof(REFDIR)){
+	@dirin=readdir(REFDIR);
+#	print @dirin;
+#	print STDOUT $ldir,"\n",$subdir,"\n";
+#	if (-e $ldir.$subdir) {print " YEEEEEEEEEHAAAAAAAAAAAAA\n"};
+	if (! -e $ldir."/".$subdir && $u) {system("mkdir -p $ldir/$subdir")};
+ 	foreach (@dirin){
+                s+^+$subdir+;
+#		print substr($_,-2,2),"\n";
+		if(substr($_,-2,2) eq ".f"
+		|| substr($_,-2,2) eq ".c"
+		|| substr($_,-4,4) eq ".f90"
+		|| substr($_,-3,3) eq ".pl"
+		|| substr($_,-4,4) eq ".mki"
+		|| substr($_,-4,4) eq ".inc"
+		|| substr($_,0,3) eq "mk_"
+		|| $_ eq $subdir."Makefile.in"
+		|| $_ eq "Compiler.options"
+		|| $_ eq "Makefile.in"
+		|| $_ eq "Subdirs"
+		|| $_ eq "build")
+		{
+# 		print STDOUT $_,"\n";
+		if ($u){
+		if (-e){
+# 		system("find $masterdir/$_ -newer $ldir/$_ -print -exec cp -p {} $ldir/$_ ';'");
+ 		if ((-M $masterdir."/".$_) < (-M $ldir."/".$_)) {
+			system("cp -p $masterdir/$_ $ldir/$_ ");
+			if ($R) {
+				foreach $runone (@runthis){
+					system("$runone $ldir/$_ ");
+				}
+			}
+			print $masterdir,"/",$_,"\n";
+			}
+		}
+		else{
+		system("cp $masterdir/$_ $ldir/$_");
+		if ($R) {
+			foreach $runone (@runthis){
+				system("$runone $ldir/$_ ");
+			}
+		}
+		print $masterdir,"/",$_,"\n";
+		}
+		}
+		else {
+		if (-e){
+#		system("find $masterdir/$_ -newer $ldir/$_ -print -exec echo '   is not updated' ';' ");
+ 		if ((-M $masterdir."/".$_) < (-M $ldir."/".$_)) {
+			print $masterdir,"/",$_," is not updated\n";
+			}
+		}
+		else{
+		print $masterdir,"/",$_," has not been copied\n";
+		}
+		}
+		}
+ 		}
+	closedir(REFDIR);
+}
+#############
+## end of subroutine
+############
+
+ 	&updatefrom('');
+
+	if (-e 'Subdirs'){
+	open(SUBDIRFILE,"Subdirs");
+	while(<SUBDIRFILE>)	{
+#			print $_,"/n";
+			chop;
+			&updatefrom($_);
+			}
+	close(SUBDIRS);
+
+	}
+
+
+	}
+
+SKIP:
+
+# -----------------------------------------
+# Let's see what the user wants us to do ..
+
+#old_default $cfile=$ARGV[0];	# first argument is the file to be compiled
+#old_default $arch=$ARGV[1];		# second argument is the optional architecture
+#old_default 
+#old_default if ($m) {$arch=$cfile;} # for the -m flag we only allow the architecture as argument
+
+$arch=$ARGV[0];
+if ($c) {
+	$cfile=$arch;
+	$arch=$ARGV[1];
+}
+# -----------------------------------------
+
+
+#print "read in archi $arch \n";
+
+
+# -------------------------------------------------------
+# Let's take the default architecture determined by uname
+
+if (length($arch) == 0) {
+$arch=`uname` || die("build : error : Cannot determine architecture\n");
+print "build : message : determined architecture : $arch \n";
+chop($arch);
+}
+# -------------------------------------------------------
+ 
+
+# -----------------------------------------------
+# Here come all the recognized architecture flags
+# make sure that at least the 
+# output of "uname" is in the list
+
+$altarch=$arch;
+$altarch="HPUX" if ($arch eq "hpux"); 
+$altarch="HPUX" if ($arch eq "hp"); 
+$altarch="HPUX" if ($arch eq "HP"); 
+$altarch="HPUX" if ($arch eq "HP-UX"); 
+$altarch="HPUX" if ($arch eq "HP-UX\n"); 
+$arch="HP-UX" if ($arch eq "HP-UX\n"); 
+$altarch="HPUX-PA8000" if ($arch eq "HP-UX" && `uname -m` eq "9000/780\n");
+$altarch="HPUX-10.01" if ($arch eq "HP-UX" && `uname -r` eq "B.10.01\n");
+
+$altarch="AIX" if ($arch eq "aix"); 
+$altarch="AIX" if ($arch eq "ibm"); 
+$altarch="AIX" if ($arch eq "IBM"); 
+$altarch="AIX" if ($arch eq "AIX\n"); 
+$arch="AIX" if ($arch eq "AIX\n"); 
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,7043-260\n");
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,7044-170\n");
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,7044-270\n");
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,9076-260\n");
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,9076-N80\n");
+$altarch="AIX-PWR3" if ($arch eq "AIX" && `uname -M` eq "IBM,9076-N81\n");
+$altarch="AIX-PWR3-32bit" if ($arch eq "AIX" && `uname -M` eq "IBM,7043-260\n" && `uname -v` eq "4\n");
+$altarch="AIX-PWR3-32bit" if ($arch eq "AIX" && `uname -M` eq "IBM,7044-270\n" && `uname -v` eq "4\n");
+$arch="AIX-PWR3" if ($altarch eq "AIX-PWR3");
+$arch="AIX-PWR3-32bit" if ($altarch eq "AIX-PWR3-32bit");
+
+$altarch="AIX-PWR4-64bit" if ($arch eq "AIX" && `uname -M` eq "IBM,7028-6E4\n");
+$altarch="AIX-PWR4-64bit" if ($arch eq "AIX" && `uname -M` eq "IBM,7040-681\n");
+$altarch="AIX-PWR4-64bit" if ($arch eq "AIX" && `uname -M` eq "IBM,7039-651\n");
+$altarch="AIX-PWR4-64bit" if ($arch eq "AIX-PWR4-64bit");
+$arch="AIX-PWR4-64bit" if ($altarch eq "AIX-PWR4-64bit");
+
+$altarch="SGI" if ($arch eq "IRIX"); 
+$altarch="SGI" if ($arch eq "irix"); 
+$altarch="SGI" if ($arch eq "sgi"); 
+$altarch="SGI" if ($arch eq "IRIX64"); 
+$altarch="SGI" if ($arch eq "IRIX64\n"); 
+$arch="IRIX64" if ($arch eq "IRIX64\n"); 
+
+$altarch="SOLARIS" if ($arch eq "SunOS"); 
+$altarch="SOLARIS" if ($arch eq "SOLARIS"); 
+$arch="SOLARIS" if ($arch eq "SunOS\n"); 
+
+$altarch="SOLARIS-64" if ($arch eq "SOLARIS-64"); 
+
+if($altarch eq "SOLARIS"){
+#
+# try to find out the version of the f90 compiler, 4.x is the default
+#
+$compiler = `f90 -V 2>&1 1>/dev/null`;
+$version = 4;
+$version = 5 if ($compiler =~ /f90: WorkShop Compilers 5./);
+$version = 6 if ($compiler =~ /f90: WorkShop Compilers 6./);
+$version = 7 if ($compiler =~ /f90: WorkShop Compilers 7./);
+#print "->$compiler<-\n";
+print "detected Sun f90 compiler version: $version\n";
+$altarch="SOLARIS-WS5" if ($altarch eq "SOLARIS" and $version ge 5);
+};
+
+$altarch="LINUX" if ($arch eq "linux"); 
+$altarch="LINUX" if ($arch eq "Linux"); 
+$altarch="LINUX" if ($arch eq "Linux\n"); 
+$arch="Linux" if ($arch eq "Linux\n"); 
+
+$altarch="LINUX-ABSOFT" if (($arch eq "linux") && $absoft); 
+$altarch="LINUX-ABSOFT" if (($arch eq "Linux") && $absoft); 
+$altarch="LINUX-ABSOFT" if (($arch eq "Linux\n") && $absoft); 
+$arch="Linux" if (($arch eq "Linux\n") && $absoft); 
+
+$altarch="PGI-F90" if ($arch eq "PGI-F90"); 
+$altarch="LINUX" if ($arch eq "PGI-HPF"); 
+$altarch="LINUX" if ($arch eq "PGI\n"); 
+$arch="PGI" if ($arch eq "PGI\n"); 
+
+$altarch="LINUX-f95" if (($arch eq "Linux\n") && $f95); 
+$altarch="LINUX-f95" if (($arch eq "Linux") && $f95); 
+$altarch="LINUX-f95" if (($arch eq "linux") && $f95); 
+$arch="Linux" if (($arch eq "Linux\n") && $f95); 
+
+$altarch="LINUX-386" if ($arch eq "linux-386");
+$altarch="LINUX-386" if ($arch eq "Linux-386");
+$altarch="LINUX-386" if ($arch eq "linux386");
+$altarch="LINUX-386" if ($arch eq "Linux386");
+
+$altarch="LINUX-586" if ($arch eq "linux-586");
+$altarch="LINUX-586" if ($arch eq "Linux-586");
+$altarch="LINUX-586" if ($arch eq "linux586");
+$altarch="LINUX-586" if ($arch eq "Linux586");
+
+$altarch="INTEL-F95" if ($arch eq "INTEL-F95"); 
+$arch="INTEL-F95" if ($arch eq "INTEL-F95\n"); 
+
+$altarch="INTEL-F95-V9" if ($arch eq "linux"); 
+$altarch="INTEL-F95-V9" if ($arch eq "Linux"); 
+$altarch="INTEL-F95-V9" if ($arch eq "Linux\n"); 
+
+$altarch="INTEL-F95-V8" if (($arch eq "linux") && $v8); 
+$altarch="INTEL-F95-V8" if (($arch eq "Linux") && $v8); 
+$altarch="INTEL-F95-V8" if (($arch eq "Linux\n") && $v8); 
+$altarch="INTEL-F95-V7" if ($arch eq "INTEL-F95-V7"); 
+$arch="INTEL-F95-V7" if ($arch eq "INTEL-F95-V7\n"); 
+
+$altarch="INTEL-F95-V9-MPI" if ($arch eq "linux" && $mpi); 
+$altarch="INTEL-F95-V9-MPI" if ($arch eq "Linux" && $mpi); 
+$altarch="INTEL-F95-V9-MPI" if ($arch eq "Linux\n" && $mpi); 
+
+$altarch="INTEL-F95-V8-MPI" if ($arch eq "linux" && $mpi && $v8); 
+$altarch="INTEL-F95-V8-MPI" if ($arch eq "Linux" && $mpi && $v8); 
+$altarch="INTEL-F95-V8-MPI" if ($arch eq "Linux\n" && $mpi && $v8); 
+
+$altarch="ITANIC-INTEL-F95-V7" if ($arch eq "Linux" && `uname -m` eq "ia64\n"); 
+$altarch="ITANIC-INTEL-F95-V7" if ($arch eq "ITANIC-INTEL-F95-V7"); 
+
+$altarch="ITANIC-INTEL-F95-V8" if ($arch eq "Linux" && `uname -m` eq "ia64\n"); 
+$altarch="ITANIC-INTEL-F95-V8" if ($arch eq "ITANIC-INTEL-F95-V8"); 
+
+$altarch="ITANIC-INTEL-F95-V7-MPI" if ($arch eq "Linux" && `uname -m` eq "ia64\n" && $mpi); 
+$altarch="ITANIC-INTEL-F95-V7-MPI" if ($arch eq "ITANIC-INTEL-F95-V7" && $mpi); 
+$altarch="ITANIC-INTEL-F95-V7-MPI" if ($arch eq "ITANIC-INTEL-F95-V7-MPI"); 
+
+$altarch="ITANIC-INTEL-F95-V8-MPI" if ($arch eq "Linux" && `uname -m` eq "ia64\n" && $mpi); 
+$altarch="ITANIC-INTEL-F95-V8-MPI" if ($arch eq "ITANIC-INTEL-F95-V8" && $mpi); 
+$altarch="ITANIC-INTEL-F95-V8-MPI" if ($arch eq "ITANIC-INTEL-F95-V8-MPI"); 
+
+$arch="ITANIC-INTEL-F95-V7" if ($arch eq "ITANIC-INTEL-F95-V7\n"); 
+
+$arch="ITANIC-INTEL-F95-V8" if ($arch eq "ITANIC-INTEL-F95-V8\n"); 
+
+$altarch="X86_64-INTEL-F95-V8" if ($arch eq "Linux" && `uname -m` eq "x86_64\n"); 
+$altarch="X86_64-INTEL-F95-V8" if ($arch eq "X86_64-INTEL-F95-V8"); 
+
+$altarch="X86_64-NAG" if ($arch eq "Linux" && `uname -m` eq "x86_64\n" && $nag); 
+$altarch="X86_64-NAG" if ($arch eq "X86_64-NAG"); 
+$arch="X86_64-NAG" if ($arch eq "X86_64-NAG\n"); 
+
+$altarch="X86_64-PSCL" if ($arch eq "X86_64-PSCL"); 
+$arch="X86_64-PSCL" if ($arch eq "X86_64-PSCL\n"); 
+
+$altarch="X86_64-NAG-MPI" if ($arch eq "Linux" && `uname -m` eq "x86_64\n" && $mpi && $nag); 
+$altarch="X86_64-NAG-MPI" if ($arch eq "X86_64-NAG" && $mpi); 
+$arch="X86_64-NAG-MPI" if ($arch eq "X86_64-NAG\n" && $mpi); 
+
+$altarch="X86_64-PSCL-MPI" if ($arch eq "X86_64-PSCL" && $mpi); 
+$arch="X86_64-PSCL-MPI" if ($arch eq "X86_64-PSCL\n" && $mpi); 
+
+if($altarch eq "X86_64-INTEL-F95-V8"){
+#
+# try to find out the type of the CPU used, Pentium is the default:
+#
+$compiler = `uname -m`;
+$cpu_opts = "-tpp7 -axW";  # default
+print "X86-64/IA32EM CPU type found: ->$cpu_opts<-\n";
+#
+# check and add MPI flag if requested:
+#
+$altarch = "X86_64-INTEL-F95-V8-MPI" if($mpi);
+$arch = "X86_64-INTEL-F95-V8-MPI" if($mpi);
+};
+
+if($altarch eq "INTEL-F95"){
+#
+# try to find out the type of the CPU used, Pentium is the default:
+#
+$compiler = `uname -m`;
+$cpu_opts = "-tpp5 -axM";  # default: Pentium
+$cpu_opts = "-tpp5 -axM" if ($compiler =~ /i586/); # Pentium
+$cpu_opts = "-tpp6 -xi" if ($compiler =~ /i686/);  # Pentium Pro
+$cpu_opts = "-tpp6 -xK" if ($compiler =~ /i786/);  # Pentium III
+print "Intel CPU type found: ->$compiler<-\nOptions used: ->$cpu_opts<-\n";
+};
+
+if(($altarch eq "INTEL-F95-V7") || ($altarch eq "INTEL-F95-V7-MPI")) {
+#
+# try to find out the type of the CPU used, Pentium is the default:
+#
+$compiler = `cat /proc/cpuinfo`;
+$cpu_opts = "";                                                   # default: none!
+$cpu_opts = "-tpp5 -xi "       if ($compiler =~ /Pentium/);           # Pentium
+$cpu_opts = "-tpp6 -xi "       if ($compiler =~ /Pentium Pro/);       # Pentium Pro
+$cpu_opts = "-tpp6 -xi "       if ($compiler =~ /Pentium\(R\) Pro/);  # Pentium(R) Pro
+$cpu_opts = "-tpp6 -xMi "      if ($compiler =~ /Pentium II/);        # Pentium II
+$cpu_opts = "-tpp6 -xMi "      if ($compiler =~ /Pentium\(R\) II/);   # Pentium(R) II
+$cpu_opts = "-tpp6 -xMiK "     if ($compiler =~ /Pentium III/);       # Pentium III
+$cpu_opts = "-tpp6 -xMiK "     if ($compiler =~ /Pentium\(R\) III/);  # Pentium(R) III
+$cpu_opts = "-tpp7 -xMiKW " if ($compiler =~ /Pentium 4/);         # Pentium 4
+$cpu_opts = "-tpp7 -xMiKW " if ($compiler =~ /AMD Athlon\(tm\) 64 Processor/);  # Athlon 64
+$cpu_opts = "-tpp7 -xMiKW " if ($compiler =~ /Pentium\(R\) 4/);    # Pentium(R) 4
+$cpu_opts = "-tpp7 -xMiKW " if ($compiler =~ /Intel\(R\) Xeon/);  # Xeon
+print "Intel CPU type found: ->$cpu_opts<-\n";
+};
+
+if(($altarch eq "INTEL-F95-V9") || ($altarch eq "INTEL-F95-V9-MPI") || ($altarch eq "INTEL-F95-V8") || ($altarch eq "INTEL-F95-V8-MPI")){
+#
+# try to find out the type of the CPU used, Pentium is the default:
+#
+$compiler = `cat /proc/cpuinfo`;
+$cpu_opts = "";                                                   # default: none!
+$cpu_opts = "-tpp5 -tune pn1 -arch pn1 "       if ($compiler =~ /Pentium/);           # Pentium
+$cpu_opts = "-tpp6 -tune pn2 -arch pn2 "       if ($compiler =~ /Pentium Pro/);       # Pentium Pro
+$cpu_opts = "-tpp6 -tune pn2 -arch pn2 "       if ($compiler =~ /Pentium\(R\) Pro/);  # Pentium(R) Pro
+$cpu_opts = "-tpp6 -tune pn2 -arch pn2 "      if ($compiler =~ /Pentium II/);        # Pentium II
+$cpu_opts = "-tpp6 -tune pn2 -arch pn2 "      if ($compiler =~ /Pentium\(R\) II/);   # Pentium(R) II
+$cpu_opts = "-tpp6 -axK -tune pn2 -arch pn2 "     if ($compiler =~ /Pentium III/);       # Pentium III
+$cpu_opts = "-tpp6 -axK -tune pn2 -arch pn2 "     if ($compiler =~ /Pentium\(R\) III/);  # Pentium(R) III
+$cpu_opts = "-tpp7 -axN -tune pn4 -arch pn4 " if ($compiler =~ /Pentium 4/);         # Pentium 4
+$cpu_opts = "-tpp7 -axW -tune pn4 -arch pn4 " if ($compiler =~ /AMD Athlon\(tm\) 64 Processor/);  # Athlon 64
+$cpu_opts = "-tpp7 -axN -tune pn4 -arch pn4 " if ($compiler =~ /Pentium\(R\) 4/);    # Pentium(R) 4
+$cpu_opts = "-tpp7 -axN -tune pn4 -arch pn4 " if ($compiler =~ /Intel\(R\) Xeon/);  # Xeon
+print "Intel CPU type found: ->$cpu_opts<-\n";
+};
+
+$altarch="PGI-F90-SOLARIS" if ($arch eq "PGI-F90-SOLARIS"); 
+
+$altarch="MACOSX-XLF-32bit" if (($arch eq "Darwin")); 
+$altarch="MACOSX-XLF-32bit-MPI" if (($arch eq "Darwin" && $mpi)); 
+
+$altarch="MACOSX-NAG" if (($arch eq "Darwin") && $nag); 
+$altarch="MACOSX-NAG-MPI" if (($arch eq "Darwin") && $nag && $mpi); 
+
+$altarch="MACOSX-ABSOFT" if (($arch eq "Darwin" && $absoft)); 
+
+if(($altarch eq "MACOSX-ABSOFT")){
+#
+# try to find out the type of the CPU used, G4 is the default:
+#
+$cpu = `machine`;
+chop $cpu;
+if($cpu eq "ppc970") {$altarch="MACOSX-ABSOFT64"};
+print "PPC CPU type found for Absoft: ->$cpu<-\n";
+};
+
+$altarch="MACOSX-XLF-32bit" if (($arch eq "Darwin" && $xlf)); 
+$altarch="MACOSX-XLF-32bit-MPI" if (($arch eq "Darwin" && $xlf && $mpi)); 
+$arch="MACOSX" if ($arch eq "Darwin"); 
+
+#print "nag flag: $nag\n";
+#print "altarch=$altarch\n";
+#print "arch=$arch\n";
+
+$altarch="T3E" if ($arch eq "T3E"); 
+$arch="T3E" if ($arch eq "T3E\n"); 
+
+$altarch="CRAY-CF90" if ($arch eq "C90"); 
+$altarch="CRAY-CF90" if ($arch eq "c90"); 
+$altarch="CRAY-CF90" if ($arch eq "cray90"); 
+$altarch="CRAY-CF90" if ($arch eq "CRAY90"); 
+$altarch="CRAY-CF90" if ($arch eq "Cray90"); 
+$altarch="CRAY-CF90" if ($arch eq "c90\n"); 
+$arch="c90" if ($arch eq "c90\n"); 
+
+$altarch="DEC-F95" if ($arch eq "AXP"); 
+$altarch="DEC-F95" if ($arch eq "Alpha"); 
+$altarch="DEC-F95" if ($arch eq "DEC"); 
+$altarch="DEC-F95" if ($arch eq "DEC-AXP"); 
+$altarch="DEC-F95" if ($arch eq "alpha"); 
+$altarch="DEC-F95" if ($arch eq "OSF1"); 
+$altarch="DEC-F95" if ($arch eq "OSF1\n"); 
+$arch="OSF1" if ($arch eq "OSF1\n"); 
+
+# Here come the MPI-versions
+
+$altarch="AIX-MPIF4.1" if (($arch eq "AIX") && $mpi);
+$altarch="AIX-MPIF4.1" if ($arch eq "AIX-MPI");
+$altarch="AIX-MPIF4.1" if ($arch eq "aix-mpi");
+$altarch="AIX-MPIF4.1" if ($arch eq "IBM-MPI");
+$altarch="AIX-MPIF4.1" if ($arch eq "ibm-mpi");
+$arch="AIX-MPIF4.1" if (($arch eq "AIX") && $mpi);
+$altarch="AIX-PWR3-MPI" if (($arch eq "AIX-PWR3" && `uname -M` eq "IBM,7043-260\n") && $mpi);
+$altarch="AIX-PWR3-MPI" if (($arch eq "AIX-PWR3" && `uname -M` eq "IBM,9076-260\n") && $mpi);
+$altarch="AIX-PWR3-MPI" if (($arch eq "AIX-PWR3" && `uname -M` eq "IBM,9076-N80\n") && $mpi);
+$altarch="AIX-PWR3-MPI" if (($arch eq "AIX-PWR3" && `uname -M` eq "IBM,9076-N81\n") && $mpi);
+$arch="AIX-PWR3-MPI" if ($altarch eq "AIX-PWR3-MPI");
+
+$altarch="AIX-PWR3-64bit-MPI" if ($arch eq "AIX-PWR3-64bit-MPI");
+$arch="AIX-PWR3-64bit-MPI" if ($altarch eq "AIX-PWR3-64bit-MPI");
+
+$altarch="AIX-PWR4-64bit-MPI" if (($arch eq "AIX-PWR4-64bit" && `uname -M` eq "IBM,7040-681\n") && $mpi);
+$altarch="AIX-PWR4-64bit-MPI" if (($arch eq "AIX-PWR4-64bit" && `uname -M` eq "IBM,7039-651\n") && $mpi);
+$arch="AIX-PWR4-64bit-MPI" if ($altarch eq "AIX-PWR4-64bit-MPI");
+
+$altarch="AIX-PWR4-64bit-MPI" if ($arch eq "AIX-PWR4-64bit-MPI");
+$arch="AIX-PWR4-64bit-MPI" if ($altarch eq "AIX-PWR4-64bit-MPI");
+
+$altarch="AIX-PWR5-64bit-MPI" if (($arch eq "AIX-PWR5-64bit" && `uname -M` eq "IBM,9118-575\n") && $mpi);
+$arch="AIX-PWR5-64bit-MPI" if ($altarch eq "AIX-PWR5-64bit-MPI");
+
+$altarch="AIX-PWR5-64bit-MPI" if ($arch eq "AIX-PWR5-64bit-MPI");
+$arch="AIX-PWR5-64bit-MPI" if ($altarch eq "AIX-PWR5-64bit-MPI");
+
+$altarch="AIX-MPICH" if (($arch eq "AIX") && $mpich);
+$altarch="AIX-MPICH" if ($arch eq "AIX-MPICH");
+$altarch="AIX-MPICH" if ($arch eq "aix-mpich");
+$altarch="AIX-MPICH" if ($arch eq "IBM-MPICH");
+$altarch="AIX-MPICH" if ($arch eq "ibm-mpich");
+$arch="AIX-MPICH" if (($arch eq "AIX") && $mpich);
+
+
+$altarch="HPUX-MPICH" if ($mpich && ($arch eq "hpux")); 
+$altarch="HPUX-MPICH" if ($arch eq "hp-mpich"); 
+$altarch="HPUX-MPICH" if ($arch eq "HP-MPICH"); 
+$altarch="HPUX-MPICH" if ($mpich && ($arch eq "HP-UX")); 
+$arch="HP-UX" if ($mpich && ($arch eq "HP-UX")); 
+$altarch="HPUX-PA8000-MPICH" if ($mpich && $arch eq "HP-UX" && `uname -m` eq "9000/780\n");
+$altarch="HPUX-10.01-MPICH" if ($mpich && $arch eq "HP-UX" && `uname -r` eq "B.10.01\n");
+
+$altarch="SGI-MPICH" if (($arch eq "IRIX") && $mpich); 
+$altarch="SGI-MPICH" if ($arch eq "irix-mpich"); 
+$altarch="SGI-MPICH" if ($arch eq "sgi-mpich"); 
+$altarch="SGI-MPICH" if (($arch eq "IRIX64") && $mpich); 
+$arch="IRIX64" if (($arch eq "IRIX64") && $mpich); 
+
+$altarch="SGI-MPI-64" if ($arch eq "sgi-mpi-64");
+$altarch="SGI-MPI" if (($arch eq "IRIX") && $mpi); 
+$altarch="SGI-MPI" if ($arch eq "irix-mpi"); 
+$altarch="SGI-MPI" if ($arch eq "sgi-mpi"); 
+$altarch="SGI-MPI-64" if (($arch eq "IRIX64") && $mpi); 
+$arch="IRIX64" if (($arch eq "IRIX64") && $mpi); 
+
+#$altarch="LINUX-MPI" if (($arch eq "linux") && $mpi); 
+#$altarch="LINUX-MPI" if (($arch eq "Linux") && $mpi); 
+#$altarch="LINUX-MPI" if (($arch eq "Linux\n") && $mpi); 
+#$arch="Linux" if (($arch eq "Linux\n") && $mpi); 
+
+$altarch="SOLARIS-MPI" if (($arch eq "SunOS") && $mpi); 
+$altarch="SOLARIS-MPI" if (($arch eq "SOLARIS") && $mpi); 
+$altarch="SOLARIS-MPI" if (($arch eq "SOLARIS\n") && $mpi); 
+$arch="SOLARIS" if (($arch eq "SOLARIS\n") && $mpi); 
+
+if($altarch eq "SOLARIS-MPI"){
+#
+# try to find out the version of the f90 compiler, 4.x is the default
+#
+$compiler = `f90 -V 2>&1 1>/dev/null`;
+$version = 4;
+$version = 5 if ($compiler =~ /f90: WorkShop Compilers 5./);
+$version = 6 if ($compiler =~ /f90: WorkShop Compilers 6./);
+$version = 7 if ($compiler =~ /f90: WorkShop Compilers 7./);
+#print "->$compiler<-\n";
+print "detected Sun f90 compiler version: $version\n";
+$altarch="SOLARIS-MPI-WS5" if ($altarch eq "SOLARIS-MPI" and $version ge 5);
+};
+
+$altarch="PGI-F90-MPI" if (($arch eq "PGI-F90") && $mpi); 
+$altarch="PGI-F90-MPI" if (($arch eq "PGI-F90-MPI")); 
+$arch="PGI-F90-MPI" if (($arch eq "PGI\n") && $mpi); 
+
+$altarch="PGI-SOLARIS-MPI" if (($arch eq "PGI-SOLARIS") && $mpi); 
+$altarch="PGI-SOLARIS-MPI" if (($arch eq "PGI-SOLARIS-MPI")); 
+$arch="SOLARIS" if (($arch eq "SOLARIS\n") && $mpi); 
+
+
+$altarch="FreeBSD" if ($arch eq "freebsd"); 
+$altarch="FreeBSD" if ($arch eq "Freebsd"); 
+$altarch="FreeBSD" if ($arch eq "FreeBSD\n"); 
+$arch="FreeBSD" if ($arch eq "FreeBSD\n"); 
+
+$altarch="FreeBSD-IFC" if ($arch eq "freebsd" && $ifc); 
+$altarch="FreeBSD-IFC" if ($arch eq "Freebsd" && $ifc); 
+$altarch="FreeBSD-IFC" if ($arch eq "FreeBSD\n" && $ifc); 
+$altarch="FreeBSD-IFC" if ($arch eq "FreeBSD" && $ifc); 
+
+if(($altarch eq "FreeBSD-IFC")){
+#
+# try to find out the type of the CPU used, Pentium is the default:
+#
+$cpu_opts = "-tpp6 -xMiK";
+print "FreeBSD/Intel CPU type found: ->$cpu_opts<-\n";
+};
+
+$altarch="FreeBSD-MPI" if (($arch eq "FreeBSD") && $mpi); 
+$altarch="FreeBSD-MPI" if (($arch eq "FreeBSD-MPI")); 
+$arch="FreeBSD-MPI" if (($arch eq "FreeBSD\n") && $mpi); 
+
+$altarch="NEC-SX-5" if ($arch eq "NEC-SX-5"); 
+$altarch="NEC-SX-5" if ($arch eq "SX-5"); 
+$altarch="NEC-SX-5" if ($arch eq "NEC"); 
+$arch="NEC-SX-5" if ($arch eq "NEC\n"); 
+
+$altarch="MACOSX-NAG-MPI" if (($arch eq "Darwin") && $mpi); 
+$arch="MACOSX-NAG-MPI" if (($arch eq "Darwin") && $mpi); 
+$altarch="MACOSX-XLF-32bit-MPI-GM" if ($arch eq "MACOSX-XLF-32bit-MPI-GM");
+
+#
+# Alphaservers from DEC aka Compaq aka HP...
+#
+$altarch="DEC-F95-MPI" if ($arch eq "AXP" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "Alpha" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "DEC" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "DEC-AXP" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "alpha" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "OSF1" && $mpi); 
+$altarch="DEC-F95-MPI" if ($arch eq "OSF1\n" && $mpi); 
+$arch="OSF1" if ($arch eq "OSF1\n"); 
+#
+# some special version for parallel computers:
+#
+#$altarch="SGI-MPI" if ($arch eq "o2000");
+$altarch="HPUX-MPI" if ($arch eq "spp1200");
+$altarch="HPUX-PA8000-MPI" if ($arch eq "spp2000");
+$altarch="T3E" if ($arch eq "T3E-MPI");
+
+#
+# for g95, fine out with OS and CPU to set options:
+#
+if(($altarch eq "G95")){
+
+$cpu_opts = "";
+
+$system=`uname`;
+chop $system;
+if($system eq "Darwin") {
+
+# OSX detected, check for CPU:
+
+$system=`uname -p`;
+chop $system;
+if($system eq "powerpc") {
+#
+# PPC Mac:
+#
+$cpu = `machine`;
+chop $cpu;
+
+# G4, 32bit.
+if($cpu eq "ppc7450") {$cpu_opts = "-DHAS_FMA -m32 -mtune=G4 -mcpu=G4 -DOSX_ALTIVEC -maltivec -mabi=altivec"}; 
+if($cpu eq "ppc7450") {$gcc_cpu_opts = "-DHAS_FMA -m32 -mtune=G4 -mcpu=G4 -DOSX_ALTIVEC -maltivec -mabi=altivec -mpim-altivec"}; 
+
+# G5, PPC970, 64bit.
+if($cpu eq "ppc970")  {$cpu_opts = "-DHAS_FMA -m64 -mtune=G5 -mcpu=G5 -L/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/ppc64 -DOSX_ALTIVEC_64bit -maltivec -mabi=altivec"}; 
+if($cpu eq "ppc970")  {$gcc_cpu_opts = "-DHAS_FMA -m64 -mtune=G5 -mcpu=G5 -L/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/ppc64 -DOSX_ALTIVEC_64bit -maltivec -mabi=altivec -mpim-altivec"}; 
+
+$altarch = "G95-OSX";
+}
+}
+
+$system=`uname`;
+chop $system;
+if($system eq "Linux") {
+
+# Linux detected, check for CPU:
+
+$cpu = `cat /proc/cpuinfo`;
+$cpu_opts = "";                                                   # default: none!
+
+# Intel CPUs:
+$cpu_opts = "-march=pentium    -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium/);           # Pentium
+$cpu_opts = "-march=pentiumpro -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium Pro/);       # Pentium Pro
+$cpu_opts = "-march=pentiumpro -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium\(R\) Pro/);  # Pentium(R) Pro
+$cpu_opts = "-march=pentium2   -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium II/);        # Pentium II
+$cpu_opts = "-march=pentium2   -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium\(R\) II/);   # Pentium(R) II
+
+$cpu_opts = "-march=pentium3 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium III/);       # Pentium III
+$cpu_opts = "-march=pentium3 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium\(R\) III/);  # Pentium(R) III
+$cpu_opts = "-march=pentium4 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium 4/);         # Pentium 4
+$cpu_opts = "-march=pentium4 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Pentium\(R\) 4/);    # Pentium(R) 4
+$cpu_opts = "-march=pentium4 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN" if ($cpu =~ /Intel\(R\) Xeon/);  # Xeon
+
+# AMD CPUs:
+$cpu_opts = "-march=opteron -mfpmath=sse -Dx86 -DLITTLE_ENDIAN"    if ($cpu =~ /AMD Athlon\(tm\) 64 Processor/);  # Athlon 64
+
+#gcc = g95 options
+$gcc_cpu_opts = $cpu_opts;
+
+$altarch = "G95-Linux";
+}
+
+$system=`uname`;
+chop $system;
+if($system =~ "CYGWIN") {
+
+# XP with cygwin detected, use P4 as default CPU
+
+$cpu_opts = "-march=pentium4 -mfpmath=sse -Dx86 -DLITTLE_ENDIAN";
+
+$cpu = "XP/P4";
+$altarch = "G95-XP";
+}
+
+print "\nCPU type: >",$cpu,"<, options used for g95: ->$cpu_opts<-\n\n";
+
+};
+
+#print "altarch $altarch \n";
+#print "arch $arch \n";
+#print "mpich $mpich \n";
+#print "mpi $mpi \n";
+#print "ifc $ifc \n";
+
+
+if (	($altarch ne "HPUX") && 
+	($altarch ne "HPUX-PA8000") && 
+	($altarch ne "HPUX-PA8000-MPICH") && 
+	($altarch ne "HPUX-PA8000-MPI") && 
+	($altarch ne "HPUX-10.01") && 
+	($altarch ne "HPUX-10.01-MPICH") && 
+	($altarch ne "AIX") && 
+	($altarch ne "AIX-PWR3") && 
+	($altarch ne "AIX-PWR3-32bit") && 
+	($altarch ne "AIX-PWR3-MPI") && 
+	($altarch ne "AIX-PWR3-64bit-MPI") && 
+	($altarch ne "AIX-PWR4-64bit-MPI") && 
+	($altarch ne "AIX-PWR4-64bit") && 
+	($altarch ne "AIX-PWR5-64bit-MPI") && 
+	($altarch ne "AIX-PWR5-64bit") && 
+	($altarch ne "SunOS") && 
+	($altarch ne "SOLARIS") && 
+	($altarch ne "SOLARIS-WS5") && 
+	($altarch ne "SOLARIS-64") && 
+	($altarch ne "SOLARIS-64-WS5") && 
+	($altarch ne "SOLARIS-MPI") && 
+	($altarch ne "SOLARIS-MPI-WS5") && 
+	($altarch ne "HPUX-MPICH") && 
+	($altarch ne "HPUX-MPI") && 
+	($altarch ne "SGI") && 
+	($altarch ne "SGI-MPICH") && 
+	($altarch ne "SGI-MPI") && 
+	($altarch ne "SGI-MPI-64") && 
+	($altarch ne "CRAY-CF90") &&
+        ($altarch ne "T3E") &&
+        ($altarch ne "T3E-MPI") &&
+	($altarch ne "DEC-F90") &&
+	($altarch ne "DEC-F95") &&
+	($altarch ne "DEC-F95-MPI") &&
+   	($altarch ne "AIX-MPIF4.1") &&
+   	($altarch ne "AIX-MPICH") &&
+	($altarch ne "PGI-F90")   &&
+	($altarch ne "PGI-F90-MPI")   &&
+	($altarch ne "PGI-F90-SOLARIS")   &&
+	($altarch ne "PGI-F90-SOLARIS-MPI")   &&
+	($altarch ne "LINUX")   &&
+	($altarch ne "LINUX-MPI-f95")   &&
+	($altarch ne "LINUX-f95")   &&
+	($altarch ne "LINUX-386")   &&
+	($altarch ne "LINUX-586")   &&
+	($altarch ne "LINUX-ABSOFT")   &&
+	($altarch ne "LINUX-MPI")  &&
+	($altarch ne "NEC-SX-5")  &&
+	($altarch ne "FreeBSD")  &&
+	($altarch ne "FreeBSD-IFC")  &&
+	($altarch ne "MACOSX-NAG-PANTHER")  &&
+	($altarch ne "MACOSX-NAG")  &&
+	($altarch ne "MACOSX-XLF-32bit")  &&
+	($altarch ne "MACOSX-XLF-32bit-SMP")  &&
+	($altarch ne "MACOSX-XLF-32bit-MPI")  &&
+	($altarch ne "MACOSX-NAG-MPI")  &&
+	($altarch ne "MACOSX-ABSOFT")  &&
+	($altarch ne "MACOSX-ABSOFT64")  &&
+	($altarch ne "MACOSX-ABSOFT-MPI")  &&
+        ($altarch ne "MACOSX-XLF-32bit-MPI-GM") &&
+	($altarch ne "FreeBSD-MPI")  && 
+	($altarch ne "INTEL-F95-V8") &&
+	($altarch ne "INTEL-F95-V9") &&
+	($altarch ne "INTEL-F95-V7") &&
+	($altarch ne "INTEL-F95-V7-MPI") &&
+	($altarch ne "INTEL-F95-V8-MPI") &&
+	($altarch ne "INTEL-F95-V9-MPI") &&
+	($altarch ne "ITANIC-INTEL-F95-V7") &&
+	($altarch ne "ITANIC-INTEL-F95-V8") &&
+	($altarch ne "ITANIC-INTEL-F95-V7-MPI") &&
+	($altarch ne "ITANIC-INTEL-F95-V8-MPI") &&
+	($altarch ne "X86_64-NAG") &&
+	($altarch ne "X86_64-NAG-MPI") &&
+	($altarch ne "X86_64-PSCL") &&
+	($altarch ne "X86_64-PSCL-MPI") &&
+	($altarch ne "X86_64-INTEL-F95-V8") &&
+	($altarch ne "X86_64-INTEL-F95-V8-MPI") &&
+	($altarch ne "COLUMBIA-MPI") &&
+	($altarch ne "G95-OSX") &&
+	($altarch ne "G95-Linux") &&
+	($altarch ne "G95-XP") &&
+	($altarch ne "INTEL-F95") 
+	){
+	die("build : error : No recognized architecture flag : $altarch\n");
+	}
+# ----------------------------------------------
+# add SMP if requested by user:
+if($smp) {
+$arch=$arch."-SMP";
+$altarch=$altarch."-SMP";
+}
+
+$pre_tiger = 0;
+if(`uname` eq "Darwin\n" and `uname -r | cut -b 1` eq "7\n") {
+ print "pre-Tiger OSX detected!\n";
+ $altarch = $altarch."-PANTHER";
+ $pre_tiger = 1;
+}
+
+print "$arch\n";
+print "$altarch\n";
+
+
+# -----------------------------------------------
+# Now, let's make our Makefile out of Makefile.in
+# Be sure that Makefile.in contains all the 
+# necessary stuff !
+
+#
+####################################
+####
+####   A subroutine which will be needed i a second
+####
+####################################
+sub createmakefile{
+	($inmakefile,$outmakefile,$subdir)=@_;
+
+        if ($subdir ne '' && substr($subdir,-1,1) ne '/') {$subdir=$subdir.'/'};
+	$inmakefile=$subdir.$inmakefile;
+	$outmakefile=$subdir.$outmakefile;
+
+	open(MAKE,$inmakefile) || print $inmakefile." not found!\n";
+	open(NEWMAKE,">".$outmakefile);
+	$TOPDIR='TOPDIR='.`pwd`;
+	$KSHSHELL=`which ksh`;
+	print NEWMAKE "SHELL=".$KSHSHELL,"\n";
+	print NEWMAKE ".SHELL : name=ksh path=".$KSHSHELL,"\n" if($altarch eq "FreeBSD");
+	print NEWMAKE $TOPDIR,"\n";
+	while(<MAKE>)	{
+	        s?cp (.*tmp/)?\\cp -f $1?;
+	        s/ARCH=macosx/ARCH=macosx-panther/ if($pre_tiger);
+	        s?(\s)make ?$1gmake ? if($arch eq "OSF1");
+	        s?\trm (.*)?\t\\rm $1?;
+	        s?mv (.*)?\\mv $1?;
+		s/#$arch //;
+		s/#$altarch //;
+                s/GCC_CPUOPTS/$gcc_cpu_opts/; # order is important!
+                s/CPUOPTS/$cpu_opts/;
+                s/#FFLAGS/FFLAGS/ if($debug);
+                s/#DFLAGS/DFLAGS/ if($debug);
+		print NEWMAKE $_;
+		}
+	close(NEWMAKE);
+	close(MAKE);
+}
+#############
+## end of subroutine
+############
+
+if ($m || $c)	{	# for the -m and -c options we need a Makefile
+	&createmakefile('Compiler.options','options.make','');
+	&createmakefile('Makefile.in','Makefile','');
+
+	if (-e 'Subdirs'){
+	open(SUBDIRFILE,"Subdirs");
+	while(<SUBDIRFILE>)	{
+#			print $_,"/n";
+			chop;
+			&createmakefile('Makefile.in','Makefile',$_);
+			}
+	close(SUBDIRS);
+
+	}
+}
+#
+
+if ($m)	{	# with the -m option, let's stop here
+	if($l)	{
+		system("cp Makefile Makefile.$altarch");
+		if ($altarch ne $arch) {symlink("Makefile.$altarch","Makefile.$arch");}
+		}
+	die("build : Makefile complete !\n");
+	}
+# ------------------------------------------------
+
+
+
+# Here still has to come the part with the handling of the different
+# .o files
+
+#if (-d $altarch) {
+#system("cp ./$altarch/*.o .");
+#}
+
+############################################
+# LET'S GO FOR IT - hope it works ...
+############################################
+
+if ($c){
+	system `make $cfile 1>&2`;
+}
+#$out=`make $cfile`;
+ 
+#print "\nbuild : message : The swallowed output follows\n\n";
+#print $out;
+#print "\nbuild : message : End of swallowed output\n\n";
+
+#print $?;
+#if ($? != 0) {print("build : warning : make returned a non zero status : $? \n");
+#		print("build : warning : there might be a non-valid executable !\n");
+#		}
+
+
+#print $!;
+#print $@;
+
+
+# Not sure if this is the final version ....
+if($l)	{
+
+if ($cfile ne ""){
+		if ($ENV{"BUILDDESTDIR"})
+			{
+			$destdir=$ENV{"BUILDDESTDIR"};
+			$ldir=$ENV{"PWD"};
+			symlink("$ldir/$cfile","$destdir/$cfile.$altarch");
+			if ($altarch ne $arch) {symlink("$destdir/$cfile.$altarch","$destdir/$cfile.$arch");}
+			}
+		else	{
+			symlink("$cfile","$cfile.$altarch");
+			if ($altarch ne $arch) {symlink("$cfile.$altarch","$cfile.$arch");}
+			}
+		print("build : message : created symbolic links\n");
+		 }
+else		{
+		print "build : warning : defaults of the Makefile have been compiled\nbuild : warning : no copies with architecture as ending have been created\n";
+		}
+	}
+
+
+# Comment LINUX Linux
+# linux Linux LINUX 
+# linux
+# uname -m 

@@ -1,0 +1,45 @@
+######################################################################
+## Filename:      Makefile.in
+## Version:       1.0
+## Description:   standard Makefile for Astr. 5900 
+## Author:        Eddie Baron <baron@nhn.ou.edu>
+## Created at:    Mon Aug 25 16:57:09 2003
+## Modified at:   Wed May 30 13:30:37 2007
+## Modified by:   Eddie Baron <baron@nhn.ou.edu>
+######################################################################
+
+include options.make
+
+#
+# here's how we translate the files:
+#
+.f90.o:
+#INTEL-F95 	make ifcstuff
+	$(F95) $(FFLAGS) $(FLAGS2) -c $< 
+
+.f.o:
+#INTEL-F95 	make ifcstuff
+	$(F95) $(FFLAGS) $(FLAGS2) -c $< 
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+default: intdhpcg.o dhpcg.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o intdhpcg $^
+
+quadratic: quadratic.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o $@ $^
+wv: wv.o
+	f77 $(FFLAGS) $(LFLAGS) -o $@ $@.o -L/home1/andromeda/pia/PGPLOT -R/home1/andromeda/pia/PGPLOT -lpgplot
+
+simple: simple.o
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $^
+
+three_methods: three_methods.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o $@ $^
+
+test_ran2: test_ran2.o ran2.o ran3.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o $@ $^
+try_mu: try_mu.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o $@ $^
+locnormt: locnormt.o locnorm.o
+	$(F95) $(FFLAGS) $(LFLAGS) -o $@ $^
